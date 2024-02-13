@@ -1,0 +1,19 @@
+Package: squallms
+Type: Package
+Title: Speedy quality assurance via lasso labeling for LC-MS data
+Version: 0.1.0
+Authors@R: c(
+  person(given = "William", family = "Kumler", email = "wkumler@uw.edu",
+         role = c("aut", "cre", "cph"))
+  )
+Maintainer: William Kumler <wkumler@uw.edu>
+Description: 
+License: MIT
+URL: https://github.com/wkumler/squallms
+BugReports: https://github.com/wkumler/squallms/issues
+Encoding: UTF-8
+LazyData: true
+Imports: 
+RoxygenNote: 7.2.3
+Suggests:
+VignetteBuilder: knitr
