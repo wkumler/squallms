@@ -1,7 +1,5 @@
 # Speedy quality assurance via lasso labeling for untargeted MS data (squallms)
 
-==========
-
 ## Overview
 
 `squallms` is a Bioconductor R package that implements a "semi-labeled" approach to untargeted mass spectrometry data. It pulls in raw data from mass-spec files to calculate several metrics that are then used to label MS features in bulk as high or low quality that are then passed to a simple logistic model that produces a fully-labeled dataset suitable for downstream analysis. 

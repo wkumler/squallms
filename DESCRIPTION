@@ -7,7 +7,12 @@ Authors@R: c(
          role = c("aut", "cre", "cph"))
   )
 Maintainer: William Kumler <wkumler@uw.edu>
-Description: 
+Description: squallms is a Bioconductor R package that implements a 
+  "semi-labeled" approach to untargeted mass spectrometry data. It pulls in raw 
+  data from mass-spec files to calculate several metrics that are then used to 
+  label MS features in bulk as high or low quality that are then passed to a 
+  simple logistic model that produces a fully-labeled dataset suitable for 
+  downstream analysis. 
 License: MIT
 URL: https://github.com/wkumler/squallms
 BugReports: https://github.com/wkumler/squallms/issues
