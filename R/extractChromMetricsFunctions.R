@@ -1,124 +1,83 @@
 
-extractChromMetrics <- function(xcms_obj=NULL, peakbound_df=NULL, mzML_files=NULL, 
-                                pixelPCA=FALSE, recalc_betas=FALSE, verbosity=1){
-  if(!is.null(xcms_obj)){
-    if(!is.null(peakbound_df)){
-      warning(paste0("Both `xcms_obj` and `peakbound_df` were supplied\n",
-                     "Using `xcms_obj` and ignoring `peakbound_df`"))
-    }
-    if(FALSE){ # Fix this later
-      stop(paste0("`xcms_obj` does not seem to contain beta_cor or beta_snr\n",
-                  "Consider setting recalc_betas=TRUE or rerunning XCMS with ",
-                  "verboseBetaColumns=TRUE in the peakpicking step."))
-    }
-    if(FALSE){ # Fix this later
-      stop("`xcms_obj` does not seem to contain groups\n")
-    }
-    if(pixelPCA & is.null(mzML_files)){
-      stop(paste0("pixelPCA requires access to the raw data\n",
-                  "Please supply filepaths to the mzML_files argument"))
-    }
-    flat_msnexp_data <- makeMSnExpFlat(xcms_obj)
-    beta_val_df <- flat_msnexp_data %>%
-      group_by(feature) %>%
-      summarise(med_mz=unique(feat_mzmed),
-                med_rt=unique(feat_rtmed),
-                med_cor=median(beta_cor, na.rm=TRUE), 
-                med_snr=median(beta_snr, na.rm=TRUE)
-      )
-    if(recalc_betas || pixelPCA){
-      message("Extracting raw MS1 data from files")
-      ms1_data <- grabMSdata(mzML_files, grab_what = "MS1", verbosity = 1)$MS1
-      if(hasAdjustedRtime(xcms_obj)){
-        ms1_data <- correctRawRTs(ms1_data, xcms_obj)
-      }
-    }
-    if(recalc_betas){
-      peakbound_df <- flat_msnexp_data %>%
-        mutate(across(starts_with("rt"), ~.x/60)) %>%
-        mutate(filename=basename(mzML_files)[sample])
-      beta_val_df <- calcBetaCoefs(peakbound_df, ms1_data)
-    }
-    if(pixelPCA){
-      peak_center_df <- flat_msnexp_data %>% 
-        distinct(feature, mzmed=feat_mzmed, rtmed=feat_rtmed)
-      message("Extracting pixel matrix from files and performing PCA")
-      pca_pixelvals <- pickPCAPixels(peak_center_df, ms1_data, verbosity = verbosity)
-      beta_val_df <- beta_val_df %>% left_join(pca_pixelvals, by="feature")
-    }
-  } else if(!is.null(peakbound_df)){
-    if(is.null(mzML_files))stop("If supplying `peakbound_df`, mzML_files must not be supplied")
-    if(is.null(peakbound_df$filename))stop("`peakbound_df` must have a `filename` column")
-    if(is.null(peakbound_df$feature))stop("`peakbound_df` must have a `feature` column")
-    if(is.null(peakbound_df$rtmin))stop("`peakbound_df` must have an `rtmin` column")
-    if(is.null(peakbound_df$rtmax))stop("`peakbound_df` must have an `rtmax` column")
-    if(is.null(peakbound_df$mzmin))stop("`peakbound_df` must have an `mzmin` column")
-    if(is.null(peakbound_df$mzmax))stop("`peakbound_df` must have an `mzmax` column")
-    # Check that mzML_files matches unique(peakbound_df$filename) exactly
-    message("Extracting raw MS1 data from files")
-    ms1_data <- grabMSdata(mzML_files, grab_what = "MS1", verbosity = 1)$MS1
-    beta_val_df <- calcBetaCoefs(peakbound_df, ms1_data)
-    if(pixelPCA){
-      peak_center_df <- peakbound_df %>%
-        group_by(feature) %>%
-        summarise(mzmed=mean(c(mzmin, mzmax)), rtmed=mean(c(rtmin, rtmax)))
-      message("Extracting pixel matrix from files and performing PCA")
-      pca_pixelvals <- pickPCAPixels(peak_center_df, ms1_data, verbosity = 1)
-      beta_val_df <- beta_val_df %>% left_join(pca_pixelvals, by="feature")
-    }
-  } else {
-    stop("One of `peakbound_df` or `xcms_obj` must not be NULL")
-  }
-  beta_val_df
-}
-
-makeMSnExpFlat <- function(msnexp){
-  peak_data_long <- msnexp %>%
+makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
+  peak_data_long <- xcms_obj %>%
     chromPeaks() %>%
     as.data.frame() %>%
     rownames_to_column() %>%
-    mutate(peakidx=row_number())
-  feat_data <- msnexp %>%
+    mutate(peakidx=row_number()) %>%
+    mutate(filename=basename(fileNames(xcms_obj))[sample])
+  feat_data <- xcms_obj %>%
     featureDefinitions() %>%
     as.data.frame() %>%
     select(mzmed, rtmed, npeaks, peakidx) %>%
     rownames_to_column("id") %>%
     mutate(rtmed=rtmed/60)
-  feat_data %>%
+  peak_data <- feat_data %>%
     unnest_longer(peakidx) %>%
     rename_with(~paste0("feat_", .x), .cols = -peakidx) %>%
     dplyr::rename(feature="feat_id") %>%
     left_join(peak_data_long, by = join_by(peakidx))
+  
+  if(revert_rts){
+    if(hasAdjustedRtime(xcms_obj)){
+      peak_data <- backToRawRTs(peak_data, xcms_obj)
+    } else {
+      stop("Unable to find adjusted RTs in xcms_obj")
+    }
+  } else {
+    warn_msg <- paste("revert_rts has been set to FALSE", 
+                      "Please confirm that the xcms_obj RTs match the raw data",
+                      sep = "\n")
+    warning(warn_msg)
+  }
+  peak_data %>%
+    mutate(across(starts_with("rt"), function(x)x/60))
 }
-
-
-correctRawRTs <- function(ms1_data, msnexp){
-  rt_corrections <- data.frame(new_rt=rtime(msnexp)) %>%
-    mutate(file_idx=fromFile(msnexp)) %>%
-    group_by(file_idx) %>%
-    mutate(scan_num=row_number()) %>%
-    ungroup() %>%
-    mutate(filename=basename(mzML_files)[file_idx]) %>%
-    select(filename, scan_num, new_rt)
-  ms1_rt_cors <- ms1_data %>%
-    distinct(rt, filename) %>%
-    group_by(filename) %>%
-    mutate(scan_num=row_number()) %>%
-    ungroup() %>%
-    left_join(rt_corrections, by = join_by(filename, scan_num)) %>%
-    mutate(new_rt=new_rt/60)
-  ggplot(ms1_rt_cors) + geom_line(aes(x=rt, y=new_rt-rt,group=filename))
-  ms1_data <- ms1_data %>%
-    left_join(ms1_rt_cors, by = join_by(rt, filename)) %>%
-    mutate(rt=new_rt) %>%
-    select(-scan_num, -new_rt)
-  ms1_data
+backToRawRTs <- function(peak_data, xcms_obj){
+  rt_cors <- data.frame(
+    sample=fromFile(xcms_obj),
+    adj_rt=rtime(xcms_obj),
+    raw_rt=rtime(suppressMessages(dropAdjustedRtime(xcms_obj)))
+  )
+  # peak_data %>%
+  #   select(sample, rtmin) %>%
+  #   left_join(rt_cors, by=c("sample", rtmin="adj_rt")) %>%
+  #   mutate(rtmin=raw_rt) %>%
+  #   select(-raw_rt)
+  # Non-equi join below handles inexact matching due to gap filled medians
+  peak_data %>%
+    left_join(rt_cors, by=join_by("sample", closest(rtmin<="adj_rt"))) %>%
+    mutate(rtmin=raw_rt) %>%
+    select(-adj_rt, -raw_rt) %>%
+    left_join(rt_cors, by=join_by("sample", closest(rtmax>="adj_rt"))) %>%
+    mutate(rtmax=raw_rt) %>%
+    select(-adj_rt, -raw_rt) %>%
+    left_join(rt_cors, by=join_by("sample", closest(rt>="adj_rt"))) %>%
+    mutate(rt=raw_rt) %>%
+    select(-adj_rt, -raw_rt)
+  
+  # Unit test
+  # xcms_obj <- readRDS('demodata/falkor/msnexp_filled.rds')
+  # msdata <- grabMSdata(fileNames(xcms_obj))
+  # msdata$MS1[mz%between%pmppm(118.0865, 10)] %>% qplotMS1data() +
+  #   geom_vline(xintercept = unadjusted_rts$rtmin/60, color="green") +
+  #   geom_vline(xintercept = unadjusted_rts$rtmax/60, color="red")
+  # adjusted_rts <- peak_data %>%
+  #   filter(feat_mzmed%between%pmppm(118.0865)) %>%
+  #   select(sample, mz, rt, rtmin, rtmax)
+  # unadjusted_rts <- peak_data %>%
+  #   backToRawRTs(xcms_obj) %>%
+  #   filter(feat_mzmed%between%pmppm(118.0865)) %>%
+  #   select(sample, mz, rt, rtmin, rtmax)
 }
-
-calcBetaCoefs <- function(peakbound_df, ms1_data){
-  message("Calculating beta coefficients from EICs")
-  within_peaks_eics <- peakboundsToEIC(peakbounds = peakbound_df, ms1_data = ms1_data)
-  beta_val_df <- within_peaks_eics %>%
+calcBetaCoefs <- function(peak_data, ms1_data, verbosity=0){
+  if(verbosity>0){
+    message("Calculating beta coefficients from EICs")
+  }
+  join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
+  beta_val_df <- peak_data %>%
+    select(feature, filename, rtmin, rtmax, mzmin, mzmax) %>%
+    left_join(msdata$MS1, join_args) %>%
     group_by(filename, feature) %>%
     summarise(peak_mz=weighted.mean(mz, int), peak_rt=median(rt), 
               beta_vals=list(qscoreCalculator(rt, int)), .groups = "drop") %>%
@@ -129,16 +88,6 @@ calcBetaCoefs <- function(peakbound_df, ms1_data){
               med_cor=median(beta_cor, na.rm=TRUE), 
               med_snr=median(beta_snr, na.rm=TRUE)
     )
-}
-peakboundsToEIC <- function(peakbounds, ms1_data, progress=TRUE){
-  map2(split(ms1_data, ms1_data$filename), split(peakbounds, peakbounds$filename), 
-       function(singlefile_ms1, singlefile_peakbounds){
-         pmap(singlefile_peakbounds, getEICfromBounds, ms1_vals=singlefile_ms1)
-       }, .progress = progress) %>%
-    bind_rows()
-}
-getEICfromBounds <- function(ms1_vals, mzmin, mzmax, rtmin, rtmax, feature, ...){
-  ms1_vals[mz%between%c(mzmin, mzmax)][rt%between%c(rtmin, rtmax)][,feature:=feature]
 }
 qscoreCalculator <- function(rt, int){
   #Check for bogus EICs
@@ -174,51 +123,51 @@ qscoreCalculator <- function(rt, int){
   #Return the quality score
   return(c(beta_snr=SNR, beta_cor=peak_cor))
 }
+scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
+pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_width=5){
+  join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
+  interp_df <- peak_data %>%
+    select(feature, filename, rt, mz) %>%
+    mutate(rtmin=rt-rt_window_width/2, rtmax=rt+rt_window_width/2) %>%
+    mutate(mzmin=mz-mz*ppm_window_width/1e6, mzmax=mz+mz*ppm_window_width/1e6) %>%
+    select(-mz, -rt) %>%
+    left_join(msdata$MS1, join_args) %>%
+    select(feature, filename, mz, rt, int) %>%
+    group_by(feature, filename) %>%
+    filter(n()>2) %>%
+    summarise(approx_int=list(
+      approx(rt, int, xout=seq(min(rt), max(rt), length.out=50), ties = max, rule = 2)$y
+      ), .groups = "drop") %>%
+    unnest(approx_int) %>%
+    group_by(feature, filename) %>%
+    mutate(approx_rt=row_number()) %>%
+    mutate(approx_int=scale_zero_one(approx_int)) %>%
+    ungroup()
 
-pickPCAPixels <- function(peak_center_df, ms1_data, verbosity=1){
-  interp_dt <- pmap(peak_center_df, function(mzmed, rtmed, feature){
-    outer_range <- rtmed+c(-0.6, 0.6)
-    interp_range <- rtmed+c(-0.5, 0.5)
-    interp_points <- seq(interp_range[1], interp_range[2], length.out=50)
-    ms1_data[mz%between%pmppm(mzmed, 10)][rt%between%outer_range] %>%
-      split(.$filename) %>%
-      lapply(function(eic_file){
-        if(nrow(eic_file)>2){
-          setNames(approx(eic_file$rt, eic_file$int, xout=interp_points, ties = max, rule = 2), c("rt", "int"))
-        } else {
-          data.frame(rt=numeric(), int=numeric())
-        }
-      }) %>%
-      bind_rows(.id="filename") %>%
-      mutate(feature)
-  }, .progress = verbosity>0) %>%
-    bind_rows() %>%
+  pcamat <- interp_df %>%
+    complete(feature, filename, approx_rt) %>%
     group_by(feature, filename) %>%
-    mutate(int=int/max(int, na.rm = TRUE))
-  pcamat <- interp_dt %>%
-    group_by(feature, filename) %>%
-    mutate(rt=rank(rt)) %>%
+    mutate(approx_rt=row_number()) %>%
+    group_by(feature, approx_rt) %>%
+    mutate(approx_int=ifelse(is.na(approx_int), mean(approx_int, na.rm=TRUE), approx_int)) %>%
     ungroup() %>%
-    complete(feature, filename, rt) %>%
-    group_by(feature, rt) %>%
-    mutate(int=ifelse(is.na(int), mean(int, na.rm=TRUE), int)) %>%
-    ungroup() %>%
-    pivot_wider(names_from=feature, values_from = int) %>%
-    arrange(filename, rt) %>%
-    select(-rt, -filename) %>%
+    pivot_wider(names_from=feature, values_from = approx_int) %>%
+    arrange(filename, approx_rt) %>%
+    select(-approx_rt, -filename) %>%
     data.matrix()
+  
   pcamat_nounitvar <- pcamat[,!apply(pcamat, 2, var)==0]
   pcafeats <- prcomp(pcamat_nounitvar, center = TRUE, scale. = TRUE)
   if(verbosity>1){
     plot(pcafeats)
     layout(matrix(c(1,2,3,4), ncol = 2, byrow = TRUE))
-    pcafeats$x[,1] %>% matrix(ncol = length(unique(interp_dt$filename))) %>% 
+    pcafeats$x[,1] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC1")
-    pcafeats$x[,2] %>% matrix(ncol = length(unique(interp_dt$filename))) %>% 
+    pcafeats$x[,2] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC2")
-    pcafeats$x[,3] %>% matrix(ncol = length(unique(interp_dt$filename))) %>% 
+    pcafeats$x[,3] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC3")
-    pcafeats$x[,4] %>% matrix(ncol = length(unique(interp_dt$filename))) %>% 
+    pcafeats$x[,4] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC4")
     layout(1) # Fix this later
   }
@@ -228,5 +177,45 @@ pickPCAPixels <- function(peak_center_df, ms1_data, verbosity=1){
     select(1:5) %>%
     rownames_to_column("feature")
 }
+extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0){
+  peak_data <- makeXcmsObjFlat(xcms_obj, revert_rts=TRUE)
+  
+  if(verbosity>0){
+    message("Grabbing raw MS1 data")
+  }
+  msdata <- grabMSdata(fileNames(xcms_obj), grab_what = "MS1", verbosity = verbosity)
+  
+  if(!"beta_cor"%in%names(peak_data) | recalc_betas){
+    message("Recalculating beta coefficients")
+    beta_df <- calcBetaCoefs(peak_data, ms1_data = msdata$MS1, verbosity=verbosity)
+  } else {
+    beta_df <- peak_data %>% 
+      group_by(feature) %>%
+      summarise(med_mz=median(feat_mzmed),
+                med_rt=median(feat_rtmed),
+                med_cor=median(beta_cor, na.rm=TRUE), 
+                med_snr=median(beta_snr, na.rm=TRUE))
+  }
+  
+  if(verbosity>0){
+    message("Constructing pixel matrix and performing PCA")
+  }
+  pca_df <- pickPCAPixels(peak_data, ms1_data = msdata$MS1)
+  
+  full_join(beta_df, pca_df, by="feature")
+}
 
-scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
+
+
+library(tidyverse)
+library(xcms)
+library(RaMS)
+xcms_obj <- readRDS('demodata/falkor/msnexp_filled.rds')
+
+feat_metrics <- extractChromMetrics(xcms_obj, recalc_betas = TRUE)
+
+feat_metrics %>%
+  ggplot(aes(label=feature)) +
+  # geom_point(aes(x=med_cor, y=med_snr, fill=PC1), color="black", pch=21) +
+  geom_point(aes(x=PC1, y=PC2, fill=med_cor), color="black", pch=21) +
+  scale_fill_viridis_c()
