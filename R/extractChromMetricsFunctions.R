@@ -5,7 +5,8 @@ makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
     as.data.frame() %>%
     rownames_to_column() %>%
     mutate(peakidx=row_number()) %>%
-    mutate(filename=basename(fileNames(xcms_obj))[sample])
+    mutate(filepath=fileNames(xcms_obj)[sample]) %>%
+    mutate(filename=basename(filepath))
   feat_data <- xcms_obj %>%
     featureDefinitions() %>%
     as.data.frame() %>%
@@ -174,14 +175,12 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_wid
     select(1:5) %>%
     rownames_to_column("feature")
 }
-extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0, ms1_data=NULL){
-  peak_data <- makeXcmsObjFlat(xcms_obj, revert_rts=TRUE)
-  
-  if(verbosity>0){
-    message("Grabbing raw MS1 data")
-  }
+extractChromMetrics <- function(peak_data, recalc_betas=FALSE, verbosity=0, ms1_data=NULL){
   if(is.null(ms1_data)){
-    ms1_data <- grabMSdata(fileNames(xcms_obj), grab_what = "MS1", verbosity=verbosity)$MS1
+    if(verbosity>0){
+      message("Grabbing raw MS1 data")
+    }
+    ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=verbosity)$MS1
   }
   
   if(!"beta_cor"%in%names(peak_data) | recalc_betas){
