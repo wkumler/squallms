@@ -157,7 +157,7 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_wid
   pcafeats <- prcomp(pcamat_nounitvar, center = TRUE, scale. = TRUE)
   if(verbosity>1){
     plot(pcafeats)
-    layout(matrix(c(1,2,3,4), ncol = 2, byrow = TRUE))
+    graphics::layout(matrix(c(1,2,3,4), ncol = 2, byrow = TRUE))
     pcafeats$x[,1] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC1")
     pcafeats$x[,2] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
@@ -166,7 +166,7 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_wid
       matplot(type="l", col="black", main="PC3")
     pcafeats$x[,4] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC4")
-    layout(1) # Fix this later
+    graphics::layout(1) # Fix this later
   }
   pcafeats %>%
     pluck("rotation") %>%
@@ -174,13 +174,15 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_wid
     select(1:5) %>%
     rownames_to_column("feature")
 }
-extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0){
+extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0, ms1_data=NULL){
   peak_data <- makeXcmsObjFlat(xcms_obj, revert_rts=TRUE)
   
   if(verbosity>0){
     message("Grabbing raw MS1 data")
   }
-  msdata <- grabMSdata(fileNames(xcms_obj), grab_what = "MS1", verbosity=verbosity)
+  if(is.null(ms1_data)){
+    ms1_data <- grabMSdata(fileNames(xcms_obj), grab_what = "MS1", verbosity=verbosity)$MS1
+  }
   
   if(!"beta_cor"%in%names(peak_data) | recalc_betas){
     if(verbosity>0){
@@ -199,7 +201,7 @@ extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0){
   if(verbosity>0){
     message("Constructing pixel matrix and performing PCA")
   }
-  pca_df <- pickPCAPixels(peak_data, ms1_data = msdata$MS1, verbosity=verbosity)
+  pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data, verbosity=verbosity)
   
   full_join(beta_df, pca_df, by="feature")
 }
