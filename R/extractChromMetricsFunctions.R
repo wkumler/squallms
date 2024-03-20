@@ -70,14 +70,11 @@ backToRawRTs <- function(peak_data, xcms_obj){
   #   filter(feat_mzmed%between%pmppm(118.0865)) %>%
   #   select(sample, mz, rt, rtmin, rtmax)
 }
-calcBetaCoefs <- function(peak_data, ms1_data, verbosity=0){
-  if(verbosity>0){
-    message("Calculating beta coefficients from EICs")
-  }
+calcBetaCoefs <- function(peak_data, ms1_data, verbosity=1){
   join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
   beta_val_df <- peak_data %>%
     select(feature, filename, rtmin, rtmax, mzmin, mzmax) %>%
-    left_join(msdata$MS1, join_args) %>%
+    left_join(ms1_data, join_args) %>%
     group_by(filename, feature) %>%
     summarise(peak_mz=weighted.mean(mz, int), peak_rt=median(rt), 
               beta_vals=list(qscoreCalculator(rt, int)), .groups = "drop") %>%
@@ -124,14 +121,14 @@ qscoreCalculator <- function(rt, int){
   return(c(beta_snr=SNR, beta_cor=peak_cor))
 }
 scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
-pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_width=5){
+pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_width=5, verbosity=1){
   join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
   interp_df <- peak_data %>%
     select(feature, filename, rt, mz) %>%
     mutate(rtmin=rt-rt_window_width/2, rtmax=rt+rt_window_width/2) %>%
     mutate(mzmin=mz-mz*ppm_window_width/1e6, mzmax=mz+mz*ppm_window_width/1e6) %>%
     select(-mz, -rt) %>%
-    left_join(msdata$MS1, join_args) %>%
+    left_join(ms1_data, join_args) %>%
     select(feature, filename, mz, rt, int) %>%
     group_by(feature, filename) %>%
     filter(n()>2) %>%
@@ -183,10 +180,12 @@ extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0){
   if(verbosity>0){
     message("Grabbing raw MS1 data")
   }
-  msdata <- grabMSdata(fileNames(xcms_obj), grab_what = "MS1", verbosity = verbosity)
+  msdata <- grabMSdata(fileNames(xcms_obj), grab_what = "MS1", verbosity=verbosity)
   
   if(!"beta_cor"%in%names(peak_data) | recalc_betas){
-    message("Recalculating beta coefficients")
+    if(verbosity>0){
+      message("Recalculating beta coefficients")
+    }
     beta_df <- calcBetaCoefs(peak_data, ms1_data = msdata$MS1, verbosity=verbosity)
   } else {
     beta_df <- peak_data %>% 
@@ -200,22 +199,7 @@ extractChromMetrics <- function(xcms_obj, recalc_betas=FALSE, verbosity=0){
   if(verbosity>0){
     message("Constructing pixel matrix and performing PCA")
   }
-  pca_df <- pickPCAPixels(peak_data, ms1_data = msdata$MS1)
+  pca_df <- pickPCAPixels(peak_data, ms1_data = msdata$MS1, verbosity=verbosity)
   
   full_join(beta_df, pca_df, by="feature")
 }
-
-
-
-library(tidyverse)
-library(xcms)
-library(RaMS)
-xcms_obj <- readRDS('demodata/falkor/msnexp_filled.rds')
-
-feat_metrics <- extractChromMetrics(xcms_obj, recalc_betas = TRUE)
-
-feat_metrics %>%
-  ggplot(aes(label=feature)) +
-  # geom_point(aes(x=med_cor, y=med_snr, fill=PC1), color="black", pch=21) +
-  geom_point(aes(x=PC1, y=PC2, fill=med_cor), color="black", pch=21) +
-  scale_fill_viridis_c()
