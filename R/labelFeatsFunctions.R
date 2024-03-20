@@ -30,12 +30,13 @@ labelSingleFeat <- function(row_data, ms1_data){
   )
   feat_class
 }
-labelFeatsManual <- function(feat_data, ms1_data){
-  if(length(setdiff(c("feature", "mzmed", "rtmed"), colnames(feat_data)))!=0){
-    stop("feat_data must be a data frame with columns feature, mzmed, and rtmed")
-  }
-  if("feat_class"%in%colnames(feat_data)){
-    feat_class_vec <- feat_data$feat_class
+labelFeatsManual <- function(peak_data, ms1_data, existing_labels=NULL){
+  feat_data <- peak_data %>%
+    group_by(feature) %>%
+    summarise(mzmed=unique(feat_mzmed), rtmed=unique(feat_rtmed))
+  
+  if(is.null(existing_labels)){
+    feat_class_vec <- existing_labels
   } else {
     feat_class_vec <- rep(NA, nrow(feat_data))
   }
