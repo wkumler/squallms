@@ -1,9 +1,10 @@
 
-labelFeatsManual <- function(row_data){
+labelSingleFeat <- function(row_data, ms1_data){
   mzbounds <- pmppm(row_data$mzmed, 10)
   rtbounds <- row_data$rtmed+c(-1, 1)
-  eic <- msdata$MS1[mz%between%mzbounds][rt%between%rtbounds] %>% 
+  eic <- ms1_data[mz%between%mzbounds][rt%between%rtbounds] %>% 
     arrange(rt)
+  if(nrow(eic)<5)return("Bad")
   dev.new(width=6, height=4)
   plot.new()
   plot.window(xlim=rtbounds, ylim=c(0, max(eic$int)), mar=c(1.1, 0.1, 0.1, 0.1))
@@ -11,7 +12,7 @@ labelFeatsManual <- function(row_data){
     lines(eic[eic$filename==j, c("rt", "int")])
   }
   axis(1)
-  title(paste(row_data$id, round(mzbounds[1], 7)))
+  title(paste(row_data$feature, round(mzbounds[1], 7)))
   abline(v=rtbounds, col="red")
   keyinput <- getGraphicsEvent(prompt = "", onKeybd = function(x){
     return(x)
@@ -27,38 +28,232 @@ labelFeatsManual <- function(row_data){
     "Up" = "Ambiguous",
     "Down" = "Stans only"
   )
-  # print(feat_class)
+  feat_class
+}
+labelFeatsManual <- function(feat_data, ms1_data){
+  if(length(setdiff(c("feature", "mzmed", "rtmed"), colnames(feat_data)))!=0){
+    stop("feat_data must be a data frame with columns feature, mzmed, and rtmed")
+  }
+  if("feat_class"%in%colnames(feat_data)){
+    feat_class_vec <- feat_data$feat_class
+  } else {
+    feat_class_vec <- rep(NA, nrow(feat_data))
+  }
+  on.exit(return(feat_class_vec))
+  plot(1)
+  
+  while(any(is.na(feat_class_vec))){
+    chosen_feat_idx <- sample(which(is.na(feat_class_vec)), 1)
+    feat_class_vec[chosen_feat_idx] <- labelSingleFeat(feat_data[chosen_feat_idx,], ms1_data)
+  }
 }
 
-# feat_class <- rep(NA, nrow(feat_feats))
-# names(feat_class) <- feat_feats$feature
-# # feat_class["FT038"] <- "Good"
-# # feat_class["FT001"] <- "Bad"
-# while(TRUE){
-#   feat_i <- sample(feat_feats$feature[is.na(feat_class)], 1)
-#   feat_data_i <- feat_data[feat_data$id==feat_i,]
-#   feat_class[feat_data_i$id] <- getPeakClass(feat_data_i)
-#   
-#   model_df <- feat_feats %>%
-#     bind_cols(feat_class=feat_class) %>%
-#     mutate(feat_class=case_when(
-#       feat_class=="Good"~1,
-#       feat_class=="Bad"~0,
-#       feat_class=="Meh"~0.5,
-#       feat_class=="Ambiguous"~NA
-#     )) %>%
-#     drop_na()
-#   glmodel <- glm(formula=feat_class~med_cor+med_snr+PC1, data = model_df, family = binomial)
-#   model_df$pred <- predict(glmodel, newdata=model_df, type = "response")
-#   
-#   print(table(model_df$feat_class, model_df$pred>0.5))
-#   feat_feats %>%
-#     mutate(pred_val=predict(glmodel, newdata=feat_feats, type = "response")) %>%
-#     with(hist(pred_val, breaks=100)) %>%
-#     plot(xlim=c(0, 1))
-# }
 
 
-labelFeatsLasso <- function(){
+
+plotpeak <- function(feat_ids, interp_df){
+  plot_dt <- interp_df %>%
+    filter(feature%in%feat_ids) %>%
+    group_by(approx_rt) %>%
+    summarise(agg_int_avg=mean(approx_int, na.rm=TRUE), agg_int_iqr=IQR(approx_int, na.rm=TRUE))
+  plot_title <- ifelse(length(feat_ids)==1, feat_ids, "Aggregate")
+  par(mar=c(0.1, 0.1, 1.1, 0.1))
+  with(plot_dt, plot(approx_rt, agg_int_avg, type="l", lwd=2, ylim=c(0, 1), 
+                     xlab="", ylab="", main=plot_title))
+  with(plot_dt, lines(approx_rt, agg_int_avg+agg_int_iqr))
+  with(plot_dt, lines(approx_rt, agg_int_avg-agg_int_iqr))
+}
+classyfeatUI <- function(){
+  fluidPage(
+    useShinyjs(),
+    extendShinyjs(text = "shinyjs.closeWindow = function() { window.close(); }", 
+                  functions = c("closeWindow")),
+    sidebarLayout(
+      sidebarPanel(
+        h3("Group peakpicker"),
+        h4("Settings"),
+        numericInput("n_kmeans_groups", label="Number of k-means groups",
+                     value = 4, min = 1, max = 10, step = 1),
+        numericInput("n_kmeans_dims", label="Number of PCs to use for k-means",
+                     value = 3, min = 1, max = 10, step = 1),
+        actionButton("kmeans_click", label = "Rerun k-means"),
+        p(" "),
+        plotOutput(outputId = "pcaprops", height = "200px"), 
+        p(" "),
+        actionButton("chosen_good", label = "Flag selection as Good"),
+        actionButton("chosen_bad", label = "Flag selection as Bad"),
+        actionButton("endsession", label = "Return to R"),
+        width = 3
+      ),
+      mainPanel(
+        fluidRow(
+          column(width=8, plotlyOutput(outputId = "plotlypca")),
+          column(width=4, plotOutput(outputId = "kmeans_avgpeak"))
+        ),
+        fluidRow(
+          column(width = 6, plotOutput(outputId = "live_peak", height = "200px")),
+          column(width = 6, plotOutput(outputId = "avg_selected_peak", height = "200px"))
+        ),
+        width=9
+      )
+    )
+  )
+}
+classyfeatServer <- function(input, output, session, pcaoutput, interp_df, verbosity=0){
+  init_par <- par(no.readonly = TRUE)
+  on.exit(par(init_par))
   
+  all_feat_ids <- rownames(pcaoutput$rotation)
+  feat_class_vec <- reactiveVal(setNames(rep(NA, length(all_feat_ids)), all_feat_ids))
+  
+  output$pcaprops <- renderPlot({
+    par(mar=c(2.1, 4.1, 0.1, 0.1))
+    perc_exp <- pcaoutput$sdev^2/sum(pcaoutput$sdev^2)
+    barplot(head(perc_exp*100, 10), 
+            ylab = "% variance explained", names.arg = paste0("PC", 1:10))
+    exp_thresholds <- c(0.2, 0.5, 0.8)
+    PCs_to_explain_perc <- sapply(exp_thresholds, function(exp_threshold){
+      which(cumsum(perc_exp)>exp_threshold)[1]
+    })
+    legend_text <- paste(paste0(exp_thresholds*100, "%: "), PCs_to_explain_perc, "PCs")
+    legend("topright", legend = legend_text, bty='n', bg="transparent")
+  })
+  kmeaned_df <- reactive({
+    input$kmeans_click
+    pcaoutput$rotation[,1:input$n_kmeans_dims] %>%
+      as.data.frame() %>%
+      mutate(cluster=factor(kmeans(., centers=input$n_kmeans_groups)$cluster)) %>%
+      rownames_to_column("feature")
+  })
+  output$plotlypca <- renderPlotly({
+    req(input$n_kmeans_groups)
+    req(input$n_kmeans_dims)
+    gp <- kmeaned_df() %>%
+      ggplot(aes(x=PC1, y=PC2, label=feature, color=cluster, key=feature)) +
+      geom_text()
+    ggplotly(gp, source = "plotlypca") %>% layout(dragmode="lasso")
+  })
+  output$kmeans_avgpeak <- renderPlot({
+    req(input$n_kmeans_groups)
+    req(input$n_kmeans_dims)
+    clustergroups <- kmeaned_df() %>% 
+      split(.$cluster) %>%
+      lapply(`[[`, "feature")
+    plot_dt <- interp_df %>%
+      left_join(kmeaned_df(),by="feature") %>%
+      group_by(approx_rt, cluster) %>%
+      summarise(agg_int_avg=mean(approx_int, na.rm=TRUE), 
+                agg_int_iqr=IQR(approx_int, na.rm=TRUE),
+                .groups = "drop")
+    gp <- plot_dt %>%
+      ggplot(aes(x=approx_rt, color=cluster)) +
+      geom_line(aes(y=agg_int_avg), linewidth=1) +
+      geom_line(aes(y=agg_int_avg+agg_int_iqr)) +
+      geom_line(aes(y=agg_int_avg-agg_int_iqr)) +
+      facet_wrap(~cluster) +
+      coord_cartesian(ylim=c(0, 1), clip="on") +
+      theme_bw() +
+      theme(legend.position = "none") +
+      labs(x="Normalized retention time", y="Normalized intensity")
+    print(gp)
+  })
+  output$live_peak <- renderPlot({
+    ed_hover <- event_data(source = "plotlypca", event = c("plotly_hover"))
+    req(ed_hover)
+    plotpeak(ed_hover$key, interp_df)
+  })
+  output$avg_selected_peak <- renderPlot({
+    ed_selected <- event_data(source = "plotlypca", event = c("plotly_selected"))
+    req(ed_selected)
+    plotpeak(ed_selected$key, interp_df)
+  })
+  observeEvent(input$chosen_good, {
+    good_feats <- event_data(source = "plotlypca", event = "plotly_selected")$key
+    init_feat_classes <- feat_class_vec()
+    init_feat_classes[good_feats] <- "Good"
+    feat_class_vec(init_feat_classes)
+    if(verbosity>0){
+      good_msg <- paste(length(good_feats), "features assigned 'Good' classification")
+      message(good_msg)
+    }
+  })
+  observeEvent(input$chosen_bad, {
+    bad_feats <- event_data(source = "plotlypca", event = "plotly_selected")$key
+    init_feat_classes <- feat_class_vec()
+    init_feat_classes[bad_feats] <- "Bad"
+    feat_class_vec(init_feat_classes)
+    if(verbosity>0){
+      bad_msg <- paste(length(bad_feats), "features assigned 'Bad' classification")
+      message(bad_msg)
+    }
+  })
+  observeEvent(input$endsession, {
+    js$closeWindow()
+    stopApp(feat_class_vec())
+  })
+  session$onSessionEnded(function() {
+    stopApp(feat_class_vec())
+  })
+}
+labelFeatsLasso <- function(peak_data, ms1_data, rt_window_width=1, 
+                            ppm_window_width=5, verbosity=1){
+  if(verbosity>0){
+    message("Loading libraries")
+  }
+  library(shiny)
+  library(shinyjs)
+  library(plotly)
+
+  if(verbosity>0){
+    message("Constructing interpolated data frame")
+  }
+  join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
+  interp_df <- peak_data %>%
+    select(feature, filename, rt, mz) %>%
+    mutate(rtmin=rt-rt_window_width/2, rtmax=rt+rt_window_width/2) %>%
+    mutate(mzmin=mz-mz*ppm_window_width/1e6, mzmax=mz+mz*ppm_window_width/1e6) %>%
+    select(-mz, -rt) %>%
+    left_join(ms1_data, join_args) %>%
+    select(feature, filename, mz, rt, int) %>%
+    group_by(feature, filename) %>%
+    filter(n()>2) %>%
+    summarise(approx_int=list(
+      approx(rt, int, xout=seq(min(rt), max(rt), length.out=50), ties = max, rule = 2)$y
+    ), .groups = "drop") %>%
+    unnest(approx_int) %>%
+    group_by(feature, filename) %>%
+    mutate(approx_rt=row_number()) %>%
+    mutate(approx_int=scale_zero_one(approx_int)) %>%
+    ungroup()
+  if(verbosity>0){
+    message("Performing PCA")
+  }
+  pcaoutput <- interp_df %>%
+    complete(feature, filename, approx_rt) %>%
+    group_by(feature, filename) %>%
+    mutate(approx_rt=row_number()) %>%
+    group_by(feature, approx_rt) %>%
+    mutate(approx_int=ifelse(is.na(approx_int), mean(approx_int, na.rm=TRUE), approx_int)) %>%
+    ungroup() %>%
+    pivot_wider(names_from=feature, values_from = approx_int) %>%
+    arrange(filename, approx_rt) %>%
+    select(-approx_rt, -filename) %>%
+    data.matrix() %>%
+    prcomp(center = TRUE, scale. = TRUE)
+  
+  if(verbosity>0){
+    message("Launching Shiny app")
+  }
+  shinydef <- shinyApp(
+    ui=classyfeatUI, 
+    server = function(input, output, session){
+      classyfeatServer(input, output, session, pcaoutput, interp_df, verbosity)
+    }, 
+    options = c(launch.browser=TRUE))
+  feat_class_vec <- runApp(shinydef)
+  
+  if(verbosity>0){
+    message("Saving classification data")
+  }
+  return(feat_class_vec)
 }
