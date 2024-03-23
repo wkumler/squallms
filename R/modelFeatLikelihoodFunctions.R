@@ -1,5 +1,0 @@
-
-
-modelFeatLikelihood <- function(){
-  
-}
