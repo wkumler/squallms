@@ -30,21 +30,37 @@ labelSingleFeat <- function(row_data, ms1_data){
   )
   feat_class
 }
-labelFeatsManual <- function(peak_data, ms1_data, existing_labels=NULL){
+labelFeatsManual <- function(peak_data, ms1_data, existing_labels=NULL, selection="Unlabeled"){
   feat_data <- peak_data %>%
     group_by(feature) %>%
     summarise(mzmed=unique(feat_mzmed), rtmed=unique(feat_rtmed))
   
   if(is.null(existing_labels)){
-    feat_class_vec <- existing_labels
-  } else {
+    if(selection=="Labeled"){
+      message("No existing labels provided, defaulting to unlabeled")
+      selection <- "Unlabeled"
+    }
     feat_class_vec <- rep(NA, nrow(feat_data))
+  } else {
+    feat_class_vec <- existing_labels
   }
+
   on.exit(return(feat_class_vec))
   plot(1)
   
-  while(any(is.na(feat_class_vec))){
-    chosen_feat_idx <- sample(which(is.na(feat_class_vec)), 1)
+  while(TRUE){
+    if(selection=="Unlabeled"){
+      feature_subset <- which(is.na(feat_class_vec))
+    } else if(selection=="Labeled"){
+      feature_subset <- which(!is.na(feat_class_vec))
+    } else {
+      feature_subset <- seq_along(feat_class_vec)
+    }
+    if(length(feature_subset)==0){
+      message("Nothing to label!")
+      break
+    }
+    chosen_feat_idx <- sample(feature_subset, 1)
     feat_class_vec[chosen_feat_idx] <- labelSingleFeat(feat_data[chosen_feat_idx,], ms1_data)
   }
 }
