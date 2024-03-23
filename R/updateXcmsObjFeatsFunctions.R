@@ -22,7 +22,7 @@ updateXcmsObjFeats <- function(xcms_obj, peak_data, feature_labels,
   }
   
   if(verbosity>1){
-    model_df %>%
+    gp <- model_df %>%
       mutate(pred=predict(glmodel, newdata=model_df, type = "response")) %>%
       mutate(feat_class=ifelse(is.na(feat_class), "Unclassified", feat_class)) %>%
       ggplot() +
@@ -33,6 +33,7 @@ updateXcmsObjFeats <- function(xcms_obj, peak_data, feature_labels,
       theme_bw() +
       labs(x="Peak shape coefficient", y="Signal-to-noise ratio", shape="Lasso class",
            color="Predicted\nclass")
+    print(gp)
   }
   
   keep_feats <- model_df %>%
