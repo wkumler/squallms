@@ -116,12 +116,11 @@ classyfeatUI <- function(){
     )
   )
 }
-classyfeatServer <- function(input, output, session, pcaoutput, interp_df, verbosity=0){
+classyfeatServer <- function(input, output, session, pcaoutput, interp_df, feat_vec, verbosity=0){
   init_par <- par(no.readonly = TRUE)
   on.exit(par(init_par))
   
-  all_feat_ids <- rownames(pcaoutput$rotation)
-  feat_class_vec <- reactiveVal(setNames(rep(NA, length(all_feat_ids)), all_feat_ids))
+  feat_class_vec <- reactiveVal(setNames(rep(NA, length(feat_vec)), feat_vec))
   
   output$pcaprops <- renderPlot({
     par(mar=c(2.1, 4.1, 0.1, 0.1))
@@ -225,6 +224,7 @@ labelFeatsLasso <- function(peak_data, ms1_data, rt_window_width=1,
     message("Constructing interpolated data frame")
   }
   join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
+  feat_vec <- unique(peak_data$feature)
   interp_df <- peak_data %>%
     select(feature, filename, rt, mz) %>%
     mutate(rtmin=rt-rt_window_width/2, rtmax=rt+rt_window_width/2) %>%
@@ -264,7 +264,7 @@ labelFeatsLasso <- function(peak_data, ms1_data, rt_window_width=1,
   shinydef <- shinyApp(
     ui=classyfeatUI, 
     server = function(input, output, session){
-      classyfeatServer(input, output, session, pcaoutput, interp_df, verbosity)
+      classyfeatServer(input, output, session, pcaoutput, interp_df, feat_vec, verbosity)
     }, 
     options = c(launch.browser=TRUE))
   feat_class_vec <- runApp(shinydef)

@@ -76,6 +76,7 @@ calcBetaCoefs <- function(peak_data, ms1_data, verbosity=1){
   beta_val_df <- peak_data %>%
     select(feature, filename, rtmin, rtmax, mzmin, mzmax) %>%
     left_join(ms1_data, join_args) %>%
+    drop_na() %>%
     group_by(filename, feature) %>%
     summarise(peak_mz=weighted.mean(mz, int), peak_rt=median(rt), 
               beta_vals=list(qscoreCalculator(rt, int)), .groups = "drop") %>%
