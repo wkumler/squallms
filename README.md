@@ -16,7 +16,7 @@ Two labeling tools are provided for rapid MS feature classification. The first r
 
 After metrics have been extracted and labeling has occurred, a logistic model can be trained to predict MS feature class from the beta_cor and beta_snr values obtained in Step 1 (and additional metrics supplied by the user). This model returns the estimated likelihood of each peak being classified as "Good" or "Bad" which can then be used to remove features that fall below a given likelihood threshold. 
 
-### Demo:
+## Demo:
 
 ```
 library(tidyverse)
@@ -27,7 +27,7 @@ mzML_files <- list.files(system.file("extdata", package = "RaMS"), full.names=TR
 
 register(BPPARAM = SerialParam(progressbar = TRUE))
 msnexp_filled <- readMSData(files = mzML_files, msLevel. = 1, mode = "onDisk") %>%
-  findChromPeaks(CentWaveParam()) %>%
+  findChromPeaks(CentWaveParam(snthresh = 0)) %>%
   adjustRtime(ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")) %>%
   groupChromPeaks(PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
                                    binSize = 0.001, minSamples = 0)) %>%
@@ -41,3 +41,5 @@ class_labels <- labelFeatsLasso(peak_data, ms1_data=msdata$MS1, verbosity=1)
 cleaned_xcms_obj <- updateXcmsObjFeats(msnexp_filled, peak_data, feature_labels=class_labels,
                                        likelihood_threshold=0.5, verbosity=2)
 ```
+
+
