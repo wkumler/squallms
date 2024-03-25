@@ -123,7 +123,7 @@ qscoreCalculator <- function(rt, int){
   return(c(beta_snr=SNR, beta_cor=peak_cor))
 }
 scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
-pickPCAPixels <- function(peak_data, ms1_data, rt_window_width=1, ppm_window_width=5, verbosity=1){
+pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width, verbosity=1){
   join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
   interp_df <- peak_data %>%
     select(feature, filename, rt, mz) %>%
@@ -201,7 +201,22 @@ extractChromMetrics <- function(peak_data, recalc_betas=FALSE, verbosity=0, ms1_
   if(verbosity>0){
     message("Constructing pixel matrix and performing PCA")
   }
-  pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data, verbosity=verbosity)
+  if(is.null(rt_window_width)){
+    rt_window_width <- peak_data %>% 
+      mutate(rtemp=(rtmax-rtmin)*2) %>% 
+      pull(rtemp) %>% 
+      median(na.rm = TRUE)
+  }
+  if(is.null(ppm_window_width)){
+    ppm_window_width <- peak_data %>% 
+      mutate(mtemp=(mzmax-mzmin)*1e6/mzmax*2) %>% 
+      pull(mtemp) %>% 
+      median(na.rm = TRUE)
+  }
+  pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data, 
+                          rt_window_width = rt_window_width, 
+                          ppm_window_width = ppm_window_width,
+                          verbosity=verbosity)
   
   full_join(beta_df, pca_df, by="feature")
 }
