@@ -90,7 +90,9 @@ qscoreCalculator <- function(rt, int){
 }
 scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
 pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width, verbosity=1){
-  pcamat <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)$pcamat
+  pickyPCAoutput <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)
+  interp_df <- pickyPCAoutput$interp_df
+  pcamat <- pickyPCAoutput$pcamat
   pcamat_nounitvar <- pcamat[,!apply(pcamat, 2, var)==0]
   pcafeats <- prcomp(pcamat_nounitvar, center = TRUE, scale. = TRUE)
   if(verbosity>1){
