@@ -30,7 +30,46 @@ labelSingleFeat <- function(row_data, ms1_data){
   )
   feat_class
 }
-labelFeatsManual <- function(peak_data, ms1_data, existing_labels=NULL, selection="Unlabeled"){
+#' Label chromatographic features manually
+#' 
+#' This function provides an interactive interface to a labeling function that
+#' plots one chromatographic feature at a time, showing the data from all the
+#' files in ms1_data within 1 minute of retention time and 10 ppm m/z space.
+#' The plot appears in a new window and is set up to detect key presses which
+#' have been bound to specific classifications. Currently, the left arrow key
+#' categorizes the feature as "Bad" while the right arrow key categorizes it
+#' as "Good". Up and down arrows can be bound to additional classifications if
+#' desired by editing the code, though a future update may provide more control.
+#' Classifications are returned as a character vector named with the feature
+#' IDs even if the full dataset is not classified. Exit the classifier with
+#' the Escape key.
+#'
+#' @param peak_data Flat-form XC-MS data with columns for the bounding box of
+#' a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature 
+#' ID. Must be provided WITHOUT retention time correction for proper matching
+#' to the values in the raw data.
+#' @param ms1_data Optional data.table object produced by RaMS containing MS1
+#' data with columns for filename, rt, mz, and int. If not provided, the files
+#' are detected from the filepath column in peak_data.
+#' @param existing_labels A character vector of equal length to the number of
+#' features in peak_data named with feature IDs. Can be used to provide a
+#' previously-existing partially-labeled dataset or double-check existing
+#' classifications.
+#' @param selection Either the string "Labeled" or "Unlabeled". If "Unlabeled",
+#' the classifier will target entries in the dataset that have not yet received
+#' a classification (i.e. those that have NA values in existing_labels). If
+#' "Labeled", the classifier will target (and overwrite) existing labels. 
+#' Otherwise, the classifier will randomly target any feature whether previously
+#' classified or not.
+#'
+#' @return A character vector named with feature IDs containing the classifications
+#' of each peak that was viewed during the interactive phase. NA values indicate
+#' those features that were not classified.
+#' @export
+#'
+#' @examples
+labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL, 
+                             selection="Unlabeled"){
   feat_data <- peak_data %>%
     group_by(feature) %>%
     summarise(mzmed=unique(feat_mzmed), rtmed=unique(feat_rtmed))
@@ -47,6 +86,13 @@ labelFeatsManual <- function(peak_data, ms1_data, existing_labels=NULL, selectio
 
   on.exit(return(feat_class_vec))
   plot(1)
+  
+  if(is.null(ms1_data)){
+    if(verbosity>0){
+      message("Grabbing raw MS1 data")
+    }
+    ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=verbosity)$MS1
+  }
   
   while(TRUE){
     if(selection=="Unlabeled"){
@@ -211,7 +257,26 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df, feat_
     stopApp(feat_class_vec())
   })
 }
-labelFeatsLasso <- function(peak_data, ms1_data, rt_window_width=1, 
+#' Label similar chromatographic features in bulk via interactive selection
+#'
+#' This function interpolates multi-file chromatograms to a shared set of retention
+#' time points then performs a PCA to place similar chromatograms near each other
+#' in a reduced dimensionality space. Features can then be labeled in groups
+#' instead of one at a time, massively reducing the burden of creating a 
+#' high-quality dataset. This implementation relies on R's \pkg{shiny} package
+#' to provide interactive support in a browser environment and the 
+#' \pkg{plotly} package for selection tools. Classified features are then 
+#' returned as a simple R object for downstream use.
+#'
+#' @inheritParams extractChromMetrics
+#'
+#' @return A character vector named with feature IDs containing the classifications
+#' of each peak that was viewed during the interactive phase. NA values indicate
+#' those features that were not classified.
+#' @export
+#'
+#' @examples
+labelFeatsLasso <- function(peak_data, ms1_data=NULL, rt_window_width=1, 
                             ppm_window_width=5, verbosity=1){
   if(verbosity>0){
     message("Loading libraries")
@@ -219,45 +284,18 @@ labelFeatsLasso <- function(peak_data, ms1_data, rt_window_width=1,
   library(shiny)
   library(shinyjs)
   library(plotly)
-
-  if(verbosity>0){
-    message("Constructing interpolated data frame")
-  }
-  join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
-  feat_vec <- unique(peak_data$feature)
-  interp_df <- peak_data %>%
-    select(feature, filename, rt, mz) %>%
-    mutate(rtmin=rt-rt_window_width/2, rtmax=rt+rt_window_width/2) %>%
-    mutate(mzmin=mz-mz*ppm_window_width/1e6, mzmax=mz+mz*ppm_window_width/1e6) %>%
-    select(-mz, -rt) %>%
-    left_join(ms1_data, join_args) %>%
-    select(feature, filename, mz, rt, int) %>%
-    group_by(feature, filename) %>%
-    filter(n()>2) %>%
-    summarise(approx_int=list(
-      approx(rt, int, xout=seq(min(rt), max(rt), length.out=50), ties = max, rule = 2)$y
-    ), .groups = "drop") %>%
-    unnest(approx_int) %>%
-    group_by(feature, filename) %>%
-    mutate(approx_rt=row_number()) %>%
-    mutate(approx_int=scale_zero_one(approx_int)) %>%
-    ungroup()
-  if(verbosity>0){
-    message("Performing PCA")
-  }
-  pcaoutput <- interp_df %>%
-    complete(feature, filename, approx_rt) %>%
-    group_by(feature, filename) %>%
-    mutate(approx_rt=row_number()) %>%
-    group_by(feature, approx_rt) %>%
-    mutate(approx_int=ifelse(is.na(approx_int), mean(approx_int, na.rm=TRUE), approx_int)) %>%
-    ungroup() %>%
-    pivot_wider(names_from=feature, values_from = approx_int) %>%
-    arrange(filename, approx_rt) %>%
-    select(-approx_rt, -filename) %>%
-    data.matrix() %>%
-    prcomp(center = TRUE, scale. = TRUE)
   
+  if(is.null(ms1_data)){
+    if(verbosity>0){
+      message("Grabbing raw MS1 data")
+    }
+    ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=verbosity)$MS1
+  }
+
+  pickyPCAoutput <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)
+  interp_df <- pickyPCAoutput$interp_df
+  pcaoutput <- prcomp(pickyPCAoutput$pcamat)
+
   if(verbosity>0){
     message("Launching Shiny app")
   }
@@ -267,10 +305,11 @@ labelFeatsLasso <- function(peak_data, ms1_data, rt_window_width=1,
       classyfeatServer(input, output, session, pcaoutput, interp_df, feat_vec, verbosity)
     }, 
     options = c(launch.browser=TRUE))
+  feat_vec <- unique(peak_data$feature)
   feat_class_vec <- runApp(shinydef)
   
   if(verbosity>0){
-    message("Saving classification data")
+    message("Returning classification data")
   }
   return(feat_class_vec)
 }

@@ -1,39 +1,5 @@
 
-makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
-  peak_data_long <- xcms_obj %>%
-    chromPeaks() %>%
-    as.data.frame() %>%
-    rownames_to_column() %>%
-    mutate(peakidx=row_number()) %>%
-    mutate(filepath=fileNames(xcms_obj)[sample]) %>%
-    mutate(filename=basename(filepath))
-  feat_data <- xcms_obj %>%
-    featureDefinitions() %>%
-    as.data.frame() %>%
-    select(mzmed, rtmed, npeaks, peakidx) %>%
-    rownames_to_column("id") %>%
-    mutate(rtmed=rtmed/60)
-  peak_data <- feat_data %>%
-    unnest_longer(peakidx) %>%
-    rename_with(~paste0("feat_", .x), .cols = -peakidx) %>%
-    dplyr::rename(feature="feat_id") %>%
-    left_join(peak_data_long, by = join_by(peakidx))
-  
-  if(revert_rts){
-    if(hasAdjustedRtime(xcms_obj)){
-      peak_data <- backToRawRTs(peak_data, xcms_obj)
-    } else {
-      stop("Unable to find adjusted RTs in xcms_obj")
-    }
-  } else {
-    warn_msg <- paste("revert_rts has been set to FALSE", 
-                      "Please confirm that the xcms_obj RTs match the raw data",
-                      sep = "\n")
-    warning(warn_msg)
-  }
-  peak_data %>%
-    mutate(across(starts_with("rt"), function(x)x/60))
-}
+
 backToRawRTs <- function(peak_data, xcms_obj){
   rt_cors <- data.frame(
     sample=fromFile(xcms_obj),
@@ -124,37 +90,7 @@ qscoreCalculator <- function(rt, int){
 }
 scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
 pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width, verbosity=1){
-  join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
-  interp_df <- peak_data %>%
-    select(feature, filename, rt, mz) %>%
-    mutate(rtmin=rt-rt_window_width/2, rtmax=rt+rt_window_width/2) %>%
-    mutate(mzmin=mz-mz*ppm_window_width/1e6, mzmax=mz+mz*ppm_window_width/1e6) %>%
-    select(-mz, -rt) %>%
-    left_join(ms1_data, join_args) %>%
-    select(feature, filename, mz, rt, int) %>%
-    group_by(feature, filename) %>%
-    filter(n()>2) %>%
-    summarise(approx_int=list(
-      approx(rt, int, xout=seq(min(rt), max(rt), length.out=50), ties = max, rule = 2)$y
-      ), .groups = "drop") %>%
-    unnest(approx_int) %>%
-    group_by(feature, filename) %>%
-    mutate(approx_rt=row_number()) %>%
-    mutate(approx_int=scale_zero_one(approx_int)) %>%
-    ungroup()
-
-  pcamat <- interp_df %>%
-    complete(feature, filename, approx_rt) %>%
-    group_by(feature, filename) %>%
-    mutate(approx_rt=row_number()) %>%
-    group_by(feature, approx_rt) %>%
-    mutate(approx_int=ifelse(is.na(approx_int), mean(approx_int, na.rm=TRUE), approx_int)) %>%
-    ungroup() %>%
-    pivot_wider(names_from=feature, values_from = approx_int) %>%
-    arrange(filename, approx_rt) %>%
-    select(-approx_rt, -filename) %>%
-    data.matrix()
-  
+  pcamat <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)$pcamat
   pcamat_nounitvar <- pcamat[,!apply(pcamat, 2, var)==0]
   pcafeats <- prcomp(pcamat_nounitvar, center = TRUE, scale. = TRUE)
   if(verbosity>1){
@@ -176,7 +112,56 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
     select(1:5) %>%
     rownames_to_column("feature")
 }
-extractChromMetrics <- function(peak_data, recalc_betas=FALSE, verbosity=0, ms1_data=NULL){
+#' Extract metrics of chromatographic peak quality
+#' 
+#' This function takes flat-form XC-MS data (i.e. the format produced by
+#' \code{\link{makeXcmsObjectFlat}}) and calculates metrics of peak shape and
+#' similarity for downstream processing (e.g. by \code{\link{updateXcmsObjFeats}}).
+#' The core metrics are those described in \url{https://doi.org/10.1186/s12859-023-05533-4},
+#' corresponding to peak shape (correlation coefficient between the raw data
+#' and an idealized bell curve, beta_cor) and within-peak signal-to-noise (
+#' maximum intensity divided by the standard deviation of the residuals after
+#' the best-fitting bell is subtracted from the raw data). Additionally,
+#' the function interpolates the raw data to fixed retention time intervals
+#' and performs a principal components analysis (PCA) across a file-by-RT matrix
+#' which typically extracts good-looking peaks in the first component (PC1).
+#' These functions are calculated on the raw MS data as obtained via 
+#' \pkg{RaMS}, so either the filepaths must be included in the peak_data object
+#' or supplied as ms1_data.
+#'
+#' @param peak_data Flat-form XC-MS data with columns for the bounding box of
+#' a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature 
+#' ID. Must be provided WITHOUT retention time correction for proper matching
+#' to the values in the raw data.
+#' @param recalc_betas Scalar boolean controlling whether existing beta values
+#' (as calculated in the XCMS object when peakpicked with \code{CentWaveParam(verboseBetaColumns=TRUE))}
+#' should be used as-is (the default) or recalculated. See 
+#' \url{https://github.com/sneumann/xcms/pull/685} for differences in these 
+#' implementations.
+#' @param ms1_data Optional data.table object produced by RaMS containing MS1
+#' data with columns for filename, rt, mz, and int. If not provided, the files
+#' are detected from the filepath column in peak_data.
+#' @param rt_window_width The width of the retention time window that should
+#' be used for PCA construction, in minutes.
+#' @param ppm_window_width The width of the m/z window that should be used for
+#' PCA construction, in parts per million.
+#' @param verbosity Scalar value between zero and two determining how much 
+#' diagnostic information is produced. Zero should return nothing, one should
+#' return text-based progress markers, and 2 will return diagnostic plots.
+#'
+#' @return A data.frame containing one row for each feature in peak_data, with
+#' columns containing the median peak shape value (med_cor), the median SNR
+#' value (med_snr), and coordinates of the feature in
+#' the first 5 principal components space.
+#' @export
+#'
+#' @examples
+#' msnexp_filled <- readRDS("inst/extdata/msnexp_filled.rds")
+#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE)
+extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL, 
+                                rt_window_width=NULL, ppm_window_width=NULL, 
+                                verbosity=0){
   if(is.null(ms1_data)){
     if(verbosity>0){
       message("Grabbing raw MS1 data")
@@ -200,18 +185,6 @@ extractChromMetrics <- function(peak_data, recalc_betas=FALSE, verbosity=0, ms1_
   
   if(verbosity>0){
     message("Constructing pixel matrix and performing PCA")
-  }
-  if(is.null(rt_window_width)){
-    rt_window_width <- peak_data %>% 
-      mutate(rtemp=(rtmax-rtmin)*2) %>% 
-      pull(rtemp) %>% 
-      median(na.rm = TRUE)
-  }
-  if(is.null(ppm_window_width)){
-    ppm_window_width <- peak_data %>% 
-      mutate(mtemp=(mzmax-mzmin)*1e6/mzmax*2) %>% 
-      pull(mtemp) %>% 
-      median(na.rm = TRUE)
   }
   pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data, 
                           rt_window_width = rt_window_width, 
