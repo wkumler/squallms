@@ -1,4 +1,5 @@
 
+# makeXcmsObjFlat ----
 #' Make an XCMS object flat
 #' 
 #' XCMSnExp objects are complicated S4 objects that make
@@ -57,7 +58,7 @@ makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
     mutate(across(starts_with("rt"), function(x)x/60))
 }
 
-
+# pickyPCA ----
 #' Perform a PCA on multi-file chromatographic data
 #' 
 #' Internal function, mostly.
@@ -128,3 +129,15 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL,
   
   return(list(interp_df=interp_df, pcamat=pcamat))
 }
+
+# Import area ----
+
+#' @import xcms
+#' @import RaMS
+#' @import dplyr
+#' @import tidyr
+#' @import ggplot2
+#' @import shiny
+#' @importFrom shinyjs useShinyjs, extendShinyjs
+#' @importFrom stats approx
+NULL
