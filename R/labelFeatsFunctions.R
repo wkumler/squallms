@@ -128,7 +128,7 @@ plotpeak <- function(feat_ids, interp_df){
 }
 classyfeatUI <- function(){
   fluidPage(
-    useShinyjs(),
+    shinyjs::useShinyjs(),
     extendShinyjs(text = "shinyjs.closeWindow = function() { window.close(); }", 
                   functions = c("closeWindow")),
     sidebarLayout(
@@ -143,9 +143,9 @@ classyfeatUI <- function(){
         p(" "),
         plotOutput(outputId = "pcaprops", height = "200px"), 
         p(" "),
-        actionButton("chosen_good", label = "Flag selection as Good"),
-        actionButton("chosen_bad", label = "Flag selection as Bad"),
-        actionButton("endsession", label = "Return to R"),
+        actionButton("chosen_good", label = "Flag selection as Good", width = "100%"),
+        actionButton("chosen_bad", label = "Flag selection as Bad", width = "100%"),
+        actionButton("endsession", label = "Return to R", width = "100%"),
         width = 3
       ),
       mainPanel(
