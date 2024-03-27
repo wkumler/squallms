@@ -18,7 +18,8 @@ URL: https://github.com/wkumler/squallms
 BugReports: https://github.com/wkumler/squallms/issues
 Encoding: UTF-8
 LazyData: true
-Imports: 
 RoxygenNote: 7.2.3
 Suggests:
+    knitr,
+    rmarkdown
 VignetteBuilder: knitr
