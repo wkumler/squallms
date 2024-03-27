@@ -1,7 +1,10 @@
 
 
-updateXcmsObjFeats <- function(xcms_obj, peak_data, feature_labels,
-                               likelihood_threshold=0.5, verbosity=2){
+logModelFeatQuality <- function(peak_data, feature_labels, 
+                                log_formula=feat_class~med_cor+med_snr,
+                                likelihood_threshold=0.5, 
+                                verbosity=2){
+  # Todo: add checks for formula vars existing in feat_metrics
   model_df <- peak_data %>%
     group_by(feature) %>%
     summarise(mzmed=unique(feat_mzmed), rtmed=unique(feat_rtmed)) %>%
@@ -13,9 +16,9 @@ updateXcmsObjFeats <- function(xcms_obj, peak_data, feature_labels,
     print(ggplot(model_df, aes(x=PC1, y=PC2, color=feat_class, label=feature)) + geom_point())
   }
   glmodel <- model_df %>%
-    mutate(feat_onehot=ifelse(feat_class=="Bad", 0, 1)) %>%
     filter(!is.na(feat_class)) %>%
-    glm(formula=feat_onehot~med_cor+med_snr, family = binomial)
+    mutate(feat_class=ifelse(feat_class=="Bad", 0, 1)) %>%
+    glm(formula=log_formula, family = binomial)
   if(verbosity>0){
     message("Logistic model regression coefficients:")
     print(glmodel$coefficients)
@@ -40,6 +43,13 @@ updateXcmsObjFeats <- function(xcms_obj, peak_data, feature_labels,
     mutate(pred=predict(glmodel, newdata=model_df, type = "response")) %>%
     filter(pred>likelihood_threshold) %>%
     pull(feature)
-  featureDefinitions(xcms_obj) <- featureDefinitions(xcms_obj)[keep_feats,]
+}
+
+updateXcmsObjFeats(xcms_obj, peak_data, feature_labels,
+                   likelihood_threshold=0.5, verbosity=2){
+  good_features <- logModelFeatQuality(peak_data, feature_labels, 
+                                       likelihood_threshold = likelihood_threshold, 
+                                       verbosity = verbosity)
+  featureDefinitions(xcms_obj) <- featureDefinitions(xcms_obj)[good_features,]
   xcms_obj
 }
