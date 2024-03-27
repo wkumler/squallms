@@ -39,9 +39,11 @@ backToRawRTs <- function(peak_data, xcms_obj){
 }
 calcBetaCoefs <- function(peak_data, ms1_data, verbosity=1){
   join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
-  beta_val_df <- peak_data %>%
+  joined_df <- peak_data %>%
     select(feature, filename, rtmin, rtmax, mzmin, mzmax) %>%
     left_join(ms1_data, join_args) %>%
+    distinct()
+  beta_val_df <- joined_df %>%
     drop_na() %>%
     group_by(filename, feature) %>%
     summarise(peak_mz=weighted.mean(mz, int), peak_rt=median(rt), 
@@ -57,7 +59,7 @@ calcBetaCoefs <- function(peak_data, ms1_data, verbosity=1){
 qscoreCalculator <- function(rt, int){
   #Check for bogus EICs
   if(length(rt)<5){
-    return(list(SNR=NA, peak_cor=NA))
+    return(c(beta_snr=NA, beta_cor=NA))
   }
   #Calculate where each rt would fall on a beta dist (accounts for missed scans)
   scaled_rts <- (rt-min(rt))/(max(rt)-min(rt))
@@ -175,7 +177,7 @@ extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL,
     if(verbosity>0){
       message("Recalculating beta coefficients")
     }
-    beta_df <- calcBetaCoefs(peak_data, ms1_data = msdata$MS1, verbosity=verbosity)
+    beta_df <- calcBetaCoefs(peak_data, ms1_data = ms1_data, verbosity=verbosity)
   } else {
     beta_df <- peak_data %>% 
       group_by(feature) %>%
@@ -185,13 +187,14 @@ extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL,
                 med_snr=median(beta_snr, na.rm=TRUE))
   }
   
-  if(verbosity>0){
-    message("Constructing pixel matrix and performing PCA")
-  }
-  pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data, 
-                          rt_window_width = rt_window_width, 
-                          ppm_window_width = ppm_window_width,
-                          verbosity=verbosity)
+  # if(verbosity>0){
+  #   message("Constructing pixel matrix and performing PCA")
+  # }
+  # pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data, 
+  #                         rt_window_width = rt_window_width, 
+  #                         ppm_window_width = ppm_window_width,
+  #                         verbosity=verbosity)
   
-  full_join(beta_df, pca_df, by="feature")
+  # full_join(beta_df, pca_df, by="feature")
+  beta_df
 }

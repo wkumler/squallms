@@ -13,7 +13,6 @@ labelSingleFeat <- function(row_data, ms1_data){
   }
   axis(1)
   title(paste(row_data$feature, round(mzbounds[1], 7)))
-  abline(v=rtbounds, col="red")
   keyinput <- getGraphicsEvent(prompt = "", onKeybd = function(x){
     return(x)
   })
@@ -72,18 +71,15 @@ labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL,
                              selection="Unlabeled"){
   feat_data <- peak_data %>%
     group_by(feature) %>%
-    summarise(mzmed=unique(feat_mzmed), rtmed=unique(feat_rtmed))
+    summarise(mzmed=median(mz), rtmed=median(rt))
   
   if(is.null(existing_labels)){
     if(selection=="Labeled"){
       message("No existing labels provided, defaulting to unlabeled")
       selection <- "Unlabeled"
     }
-    feat_class_vec <- rep(NA, nrow(feat_data))
-  } else {
-    feat_class_vec <- existing_labels
   }
-
+  
   on.exit(return(feat_class_vec))
   plot(1)
   
@@ -94,11 +90,13 @@ labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL,
     ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=verbosity)$MS1
   }
   
+  feat_class_vec <- rep(NA, nrow(feat_data))
+  
   while(TRUE){
     if(selection=="Unlabeled"){
       feature_subset <- which(is.na(feat_class_vec))
     } else if(selection=="Labeled"){
-      feature_subset <- which(!is.na(feat_class_vec))
+      feature_subset <- which(!is.na(existing_labels))
     } else {
       feature_subset <- seq_along(feat_class_vec)
     }
@@ -107,7 +105,12 @@ labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL,
       break
     }
     chosen_feat_idx <- sample(feature_subset, 1)
-    feat_class_vec[chosen_feat_idx] <- labelSingleFeat(feat_data[chosen_feat_idx,], ms1_data)
+    if(interactive()){
+      feat_class_vec[chosen_feat_idx] <- labelSingleFeat(feat_data[chosen_feat_idx,], ms1_data)
+    } else {
+      warning("Not running in interactive mode, returning NA")
+      break
+    }
   }
 }
 
@@ -128,9 +131,6 @@ plotpeak <- function(feat_ids, interp_df){
 }
 classyfeatUI <- function(){
   fluidPage(
-    shinyjs::useShinyjs(),
-    extendShinyjs(text = "shinyjs.closeWindow = function() { window.close(); }", 
-                  functions = c("closeWindow")),
     sidebarLayout(
       sidebarPanel(
         h3("Group peakpicker"),
@@ -162,7 +162,8 @@ classyfeatUI <- function(){
     )
   )
 }
-classyfeatServer <- function(input, output, session, pcaoutput, interp_df, feat_vec, verbosity=0){
+classyfeatServer <- function(input, output, session, pcaoutput, interp_df, 
+                             feat_vec, verbosity=0){
   init_par <- par(no.readonly = TRUE)
   on.exit(par(init_par))
   
@@ -250,7 +251,6 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df, feat_
     }
   })
   observeEvent(input$endsession, {
-    js$closeWindow()
     stopApp(feat_class_vec())
   })
   session$onSessionEnded(function() {
@@ -282,7 +282,6 @@ labelFeatsLasso <- function(peak_data, ms1_data=NULL, rt_window_width=1,
     message("Loading libraries")
   }
   library(shiny)
-  library(shinyjs)
   library(plotly)
   
   if(is.null(ms1_data)){
@@ -306,7 +305,13 @@ labelFeatsLasso <- function(peak_data, ms1_data=NULL, rt_window_width=1,
     }, 
     options = c(launch.browser=TRUE))
   feat_vec <- unique(peak_data$feature)
-  feat_class_vec <- runApp(shinydef)
+  if(interactive()){
+    feat_class_vec <- runApp(shinydef)
+  } else {
+    warning("Not running in interactive mode, returning NA")
+    feat_class_vec <- rep(NA, length(feat_vec))
+    names(feat_class_vec) <- feat_vec
+  }
   
   if(verbosity>0){
     message("Returning classification data")
