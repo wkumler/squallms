@@ -17,15 +17,17 @@ labelSingleFeat <- function(row_data, ms1_data){
     return(x)
   })
   dev.off()
-  if(keyinput=="ctrl-["){ # aka Esc button
-    break
+  if(keyinput=="ctrl-["){ # aka Esc button ctrl-[
+    return("Quit")
+  }
+  if(!keyinput%in%c("Right", "Left", "Up")){
+    return("Other")
   }
   feat_class <- switch(
     keyinput,
     "Right" = "Good",
     "Left" = "Bad",
-    "Up" = "Ambiguous",
-    "Down" = "Stans only"
+    "Up" = "Revisit"
   )
   feat_class
 }
@@ -106,7 +108,17 @@ labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL,
     }
     chosen_feat_idx <- sample(feature_subset, 1)
     if(interactive()){
-      feat_class_vec[chosen_feat_idx] <- labelSingleFeat(feat_data[chosen_feat_idx,], ms1_data)
+      feat_label <- labelSingleFeat(feat_data[chosen_feat_idx,], ms1_data)
+      if(feat_label=="Quit"){
+        break
+      } else if(feat_label=="Other"){
+        init_warn <- getOption("warn")
+        options(warn = 1)
+        warning("Unrecognized input, skipping")
+        options(warn=init_warn)
+      } else {
+        feat_class_vec[chosen_feat_idx] <- feat_label
+      }
     } else {
       warning("Not running in interactive mode, returning NA")
       break
