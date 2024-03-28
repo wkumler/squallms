@@ -48,7 +48,7 @@ devtools::load_all()
 
 For this vignette, I'll be using 41 marine environmental data files collected in the Ingalls Lab from the North Pacific Subtropical Gyre in 2018 and run on a Q Exactive Orbitrap mass spectrometer with HILIC chromatography. It's a large zip file (500 MB) but nicely demonstrates many of the functions that can be performed by this package and should be automatically removed at the end of the vignette.
 
-```{r download_demofiles, eval=FALSE}
+```{r download_demofiles, eval=TRUE}
 mw_file <- "ftp://www.metabolomicsworkbench.org/Studies/ST002788_HILIC_POS.zip"
 temp_dir <- tempdir()
 init_timeout <- getOption('timeout')
@@ -56,14 +56,14 @@ options(timeout=3600)
 zip_filename <- paste0(temp_dir, "/ST002788_HILIC_POS.zip")
 download.file(mw_file, destfile = zip_filename, mode = "wb")
 unzip(zipfile = zip_filename, exdir = paste0(temp_dir, "/ST002788_HILIC_POS"))
-options("timeout", init_timeout)
+options(timeout=init_timeout)
 ```
 
 ### Peakpicking with XCMS
 
 For this demo, I'll be performing peakpicking with XCMS but it's worth noting that any peakpicking software could be used to produce a peak list as long as it can be turned into the proper input format (see "Calculating metrics of peak quality" below).
 
-```{r run_xcms, eval=FALSE}
+```{r run_xcms, eval=TRUE}
 library(tidyverse)
 library(xcms)
 library(RaMS)
@@ -107,7 +107,7 @@ Note, however, that the **retention time bounds must be uncorrected**. `makeXcms
 
 The first step is to obtain some kind of information about the chromatographic features that will allow us to distinguish between good and bad. The most intuitive metrics (in my opinion) are similarity to a bell curve and the signal-to-noise ratio. Although many implementations of these exist, the ones I've found most useful are described in a BMC Bioinformatics paper I put out in 2023. The function for this in `squallms` is `extractChromMetrics`, as shown below. I read in the raw MS data with RaMS first because this saves a step and can be reused for quality checks.
 
-```{r grabMSdata}
+```{r extractChromMetrics}
 msdata <- grabMSdata(unique(feat_peak_info$filepath))
 shape_metrics <- extractChromMetrics(feat_peak_info, ms1_data = msdata$MS1)
 knitr::kable(head(shape_metrics))
@@ -260,7 +260,32 @@ data.frame(manual=manual_classes, lasso=lasso_classes) %>%
 data.frame(manual=factor(manual_classes), lasso=factor(lasso_classes)) %>%
   filter(!is.na(manual)) %>%
   with(caret::confusionMatrix(lasso, manual))
+
+class_labels <- lasso_classes
+class_labels[!is.na(manual_classes)] <- manual_classes[!is.na(manual_classes)]
 ```
 
 ## Building a quality model and removing low-quality peaks
+
+Of course, both labeling methods are designed to return partially-labeled datasets. To get quality estimates for the remaining features, we can use a logistic model trained on a few of our metrics to estimate the quality of each feature. The basic idea here is to use the `med_cor` and `med_snr` information extracted with `extractChromMetrics` as the predictive variables and the labels produced by `labelFeatsManual` or `labelFeatsLasso` as the predicted variable in a logistic regression. The default formula uses `glm(formula=feat_class~med_cor+med_snr, family = binomial)` to fit the values but additional metrics that exist in the `shape_metrics` data frame can be used as predictive variables in the model as well.
+
+```{r logModelFeatProb}
+pred_probs <- logModelFeatProb(shape_metrics, class_labels)
+
+hist(pred_probs, breaks = 10, main = NULL, xlab = "Logistic likelihood")
+```
+
+The values returned by `logModelFeatProb` can then be handled manually, or you can use the wrapper function `logModelFeatQuality` with an associated `likelihood_threshold` to return the binary good/bad classification. This also then makes it possible to assess the performance of the model on the training data itself:
+
+```{r logModelFeatQuality, fig.height=0}
+pred_classes <- logModelFeatQuality(shape_metrics, class_labels, verbosity = 1)
+```
+
+Finally, once an appropriate threshold has been set and the model's performance is acceptable the XCMS object itself can be edited to remove the poor-quality peaks.
+
+```{r}
+final_xcms <- updateXcmsObjFeats(shape_metrics, class_labels, verbosity = 1, 
+                                 likelihood_threshold = 0.9)
+```
+
 
