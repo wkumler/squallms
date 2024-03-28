@@ -143,6 +143,7 @@ plotpeak <- function(feat_ids, interp_df){
 }
 classyfeatUI <- function(){
   fluidPage(
+    tags$head(tags$script(HTML("Shiny.addCustomMessageHandler('closeWindow', function(m) {window.close();});"))),
     sidebarLayout(
       sidebarPanel(
         h3("Group peakpicker"),
@@ -263,10 +264,12 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
     }
   })
   observeEvent(input$endsession, {
+    session$sendCustomMessage(type = "closeWindow", message = "message")
     stopApp(feat_class_vec())
   })
   session$onSessionEnded(function() {
-    stopApp(feat_class_vec())
+    session$sendCustomMessage(type = "closeWindow", message = "message")
+    stopApp(isolate(feat_class_vec()))
   })
 }
 #' Label similar chromatographic features in bulk via interactive selection
