@@ -64,5 +64,23 @@ updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
                                        likelihood_threshold = likelihood_threshold, 
                                        verbosity = 2)
   featureDefinitions(xcms_obj) <- featureDefinitions(xcms_obj)[good_features,]
+  
+  xcms_obj@.processHistory[[length(xcms_obj@.processHistory)+1]] <- list(
+    type="Low-quality feature removal via squallms",
+    date=date(),
+    info="Nonstandard processing step",
+    fileIndex=seq_along(fileNames(xcms_filled)),
+    `Parameter class`="none",
+    `MS level(s)`=1
+  )
+  # ph <- xcms:::ProcessHistory(date. = date(),
+  #                             type. = "Blah",
+  #                             fileIndex = 1:length(fileNames(xcms_filled)))
+  # xph <- xcms:::XProcessHistory(param = NULL, date. = date(), 
+  #                              type. = "Unknown", 
+  #                              fileIndex = 1:length(fileNames(xcms_filled)), 
+  #                              msLevel = 1)
+  # xcms:::addProcessHistory(xcms_filled, ph) %>%
+  #   processHistory()
   xcms_obj
 }
