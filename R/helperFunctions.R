@@ -138,6 +138,5 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL,
 #' @import tidyr
 #' @import ggplot2
 #' @import shiny
-#' @importFrom shinyjs useShinyjs, extendShinyjs
 #' @importFrom stats approx
 NULL
