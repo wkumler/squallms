@@ -132,9 +132,10 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL,
 
 # Import area ----
 
-#' @import xcms
+# Need to specify a few of these manually to avoid conflicts
+#' @rawNamespace import(xcms, except = c(span, groups, collect))
 #' @import RaMS
-#' @import dplyr
+#' @rawNamespace import(dplyr, except = between)
 #' @import tidyr
 #' @import ggplot2
 #' @import shiny
