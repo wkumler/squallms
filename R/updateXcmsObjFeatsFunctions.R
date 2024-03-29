@@ -127,7 +127,6 @@ updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
                                        likelihood_threshold = likelihood_threshold, 
                                        verbosity = verbosity)
   featureDefinitions(xcms_obj) <- featureDefinitions(xcms_obj)[good_features,]
-  featureData(xcms_obj) <- featureData(xcms_obj)[good_features,]
   
   # xcms_obj@.processHistory[[length(xcms_obj@.processHistory)+1]] <- list(
   #   type="Low-quality feature removal via squallms",
