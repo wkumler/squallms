@@ -26,7 +26,8 @@ Depends:
     RaMS,
     shiny,
     plotly,
-    ggplot2
+    ggplot2,
+    data.table
 Suggests:
     knitr,
     rmarkdown
