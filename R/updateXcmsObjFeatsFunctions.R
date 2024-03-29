@@ -24,6 +24,11 @@
 #' @export
 #'
 #' @examples
+#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+#' lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+#' feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
 logModelFeatProb <- function(feature_metrics, feature_labels, 
                              log_formula=feat_class~med_cor+med_snr,
                              verbosity=2){
@@ -79,6 +84,11 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
 #' @export
 #'
 #' @examples
+#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+#' lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+#' feat_classes <- logModelFeatQuality(feat_metrics, lasso_classes)
 logModelFeatQuality <- function(feature_metrics, feature_labels, 
                                 log_formula=feat_class~med_cor+med_snr,
                                 likelihood_threshold=0.5, 
@@ -120,6 +130,11 @@ logModelFeatQuality <- function(feature_metrics, feature_labels,
 #' @export
 #'
 #' @examples
+#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+#' lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+#' msnexp_filled <- updateXcmsObjFeats(msnexp_filled, feat_metrics, lasso_classes)
 updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
                                log_formula=feat_class~med_cor+med_snr,
                                likelihood_threshold=0.5, verbosity=2){

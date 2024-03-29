@@ -160,7 +160,7 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS("inst/extdata/msnexp_filled.rds")
+#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE)
 extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL, 

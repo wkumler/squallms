@@ -42,3 +42,9 @@ can be performed.
 \description{
 Internal function, mostly.
 }
+\examples{
+msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+peak_data <- makeXcmsObjFlat(msnexp_filled)
+msdata <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=0)
+pixel_pca <- pickyPCA(peak_data, msdata$MS1)
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/updateXcmsObjFeatsFunctions.R
 \name{logModelFeatProb}
 \alias{logModelFeatProb}
-\title{Title}
+\title{Model feature quality using a logistic regression}
 \usage{
 logModelFeatProb(
   feature_metrics,
@@ -26,6 +26,22 @@ the predictive features exist in the feature_metrics data.frame.}
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
+\value{
+A numeric vector of probabilities returned by the logistic model
+named by feature ID
+}
 \description{
-Title
+After metrics have been extracted (typically with `extractChromMetrics`) and 
+labeling has occurred (typically with `labelFeatsManual` or `labelFeatsLasso`),
+a model can be built to robustly classify the peaks that were not labeled
+based on the metrics. The default regression equation fits the med_cor and
+med_snr columns in feature_metrics to the feature_labels, but additional
+metrics can be passed as well (but be careful of overfitting!).
+}
+\examples{
+msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+peak_data <- makeXcmsObjFlat(msnexp_filled)
+feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
 }
