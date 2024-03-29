@@ -64,7 +64,7 @@ xcms_filled <- mzML_files %>%
   adjustRtime(obp) %>%
   groupChromPeaks(pdp) %>%
   fillChromPeaks(FillChromPeaksParam(ppm = 5))
-saveRDS(xcms_filled, file="vignettes/intro_xcms_filled.rds")
+saveRDS(xcms_filled, file="inst/extdata/intro_xcms_filled.rds")
 ```
 
 This XCMS object is useful for documenting processing steps and interfacing with R-based pipelines but can be challenging to inspect and interact with. `squallms` provides a function that turns this S4 object into a flat file containing the feature and peak information.
@@ -136,11 +136,11 @@ manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1)
 ```
 
 ```{r save_prior_demo_labels, eval=FALSE, echo=FALSE}
-# saveRDS(manual_classes, "vignettes/intro_manual_labels.rds")
+# saveRDS(manual_classes, "inst/extdata/intro_manual_labels.rds")
 ```
 
 ```{r load_prior_manual_labels, eval=!interactive(), echo=FALSE}
-manual_classes <- readRDS("vignettes/intro_manual_labels.rds")
+manual_classes <- readRDS("inst/extdata/intro_manual_labels.rds")
 ```
 
 The classification plot looks like this:
@@ -216,11 +216,11 @@ lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 ```
 
 ```{r save_prior_demo_lassos, eval=FALSE, echo=FALSE}
-# saveRDS(lasso_classes, "vignettes/intro_lasso_labels.rds")
+# saveRDS(lasso_classes, "inst/extdata/intro_lasso_labels.rds")
 ```
 
 ```{r load_prior_lasso_labels, eval=!interactive(), echo=FALSE}
-lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+lasso_classes <- readRDS("inst/extdata/intro_lasso_labels.rds")
 ```
 
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
