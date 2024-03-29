@@ -48,7 +48,7 @@ to provide interactive support in a browser environment and the
 returned as a simple R object for downstream use.
 }
 \examples{
-msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 peak_data <- makeXcmsObjFlat(msnexp_filled)
 lasso_labels <- labelFeatsLasso(peak_data)
 }

@@ -69,7 +69,7 @@ labelSingleFeat <- function(row_data, ms1_data){
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' manual_labels <- labelFeatsManual(peak_data)
 labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL, 
@@ -294,7 +294,7 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' lasso_labels <- labelFeatsLasso(peak_data)
 labelFeatsLasso <- function(peak_data, ms1_data=NULL, rt_window_width=1, 

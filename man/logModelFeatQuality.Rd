@@ -44,9 +44,9 @@ likelihood thresholds (0.9, 0.99) will produce more false negatives (good
 peaks removed when they shouldn't be).
 }
 \examples{
-msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 peak_data <- makeXcmsObjFlat(msnexp_filled)
 feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
-lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
 feat_classes <- logModelFeatQuality(feat_metrics, lasso_classes)
 }

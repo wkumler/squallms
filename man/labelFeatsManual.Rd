@@ -53,7 +53,7 @@ IDs even if the full dataset is not classified. Exit the classifier with
 the Escape key.
 }
 \examples{
-msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 peak_data <- makeXcmsObjFlat(msnexp_filled)
 manual_labels <- labelFeatsManual(peak_data)
 }

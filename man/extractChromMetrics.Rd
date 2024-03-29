@@ -62,7 +62,7 @@ These functions are calculated on the raw MS data as obtained via
 or supplied as ms1_data.
 }
 \examples{
-msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 peak_data <- makeXcmsObjFlat(msnexp_filled)
 feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE)
 }

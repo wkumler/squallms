@@ -27,6 +27,6 @@ peaks. This function turns the output into a "flat" file format (a
 data.frame) so it can interact with tidyverse functions more easily.
 }
 \examples{
-msnexp_filled <- readRDS("inst/extdata/msnexp_filled.rds")
+msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 makeXcmsObjFlat(msnexp_filled)
 }

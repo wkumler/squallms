@@ -39,9 +39,9 @@ med_snr columns in feature_metrics to the feature_labels, but additional
 metrics can be passed as well (but be careful of overfitting!).
 }
 \examples{
-msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 peak_data <- makeXcmsObjFlat(msnexp_filled)
 feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
-lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
 feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
 }

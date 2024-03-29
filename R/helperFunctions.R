@@ -20,7 +20,7 @@
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS("inst/extdata/msnexp_filled.rds")
+#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 #' makeXcmsObjFlat(msnexp_filled)
 makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
   peak_data_long <- xcms_obj %>%
@@ -74,7 +74,7 @@ makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' msdata <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=0)
 #' pixel_pca <- pickyPCA(peak_data, msdata$MS1)
