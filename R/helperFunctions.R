@@ -74,6 +74,10 @@ makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
 #' @export
 #'
 #' @examples
+#' msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' msdata <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=0)
+#' pixel_pca <- pickyPCA(peak_data, msdata$MS1)
 pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL, 
                      ppm_window_width=NULL, verbosity=1){
   if(is.null(rt_window_width)){

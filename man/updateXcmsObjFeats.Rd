@@ -45,3 +45,10 @@ low quality features can be removed from the XCMS object to improve downstream
 processing. This function wraps `logModelFeatQuality` and automatically edits
 the features within the provided XCMS object.
 }
+\examples{
+msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+peak_data <- makeXcmsObjFlat(msnexp_filled)
+feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+msnexp_filled <- updateXcmsObjFeats(msnexp_filled, feat_metrics, lasso_classes)
+}

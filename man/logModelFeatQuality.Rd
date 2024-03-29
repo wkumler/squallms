@@ -30,6 +30,10 @@ kept if their predicted probability exceeds.}
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
+\value{
+A character vector of feature quality assessments returned by the 
+logistic model and named by feature ID
+}
 \description{
 This function wraps `logModelFeatProb` for modeling of feature quality
 to estimate the quality of every feature in the dataset and classify
@@ -38,4 +42,11 @@ them as good/bad based on whether they exceed the provided
 more false positives (noise peaks included when they shouldn't be). Higher 
 likelihood thresholds (0.9, 0.99) will produce more false negatives (good
 peaks removed when they shouldn't be).
+}
+\examples{
+msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+peak_data <- makeXcmsObjFlat(msnexp_filled)
+feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+lasso_classes <- readRDS("vignettes/intro_lasso_labels.rds")
+feat_classes <- logModelFeatQuality(feat_metrics, lasso_classes)
 }

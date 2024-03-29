@@ -8,7 +8,8 @@ labelFeatsManual(
   peak_data,
   ms1_data = NULL,
   existing_labels = NULL,
-  selection = "Unlabeled"
+  selection = "Unlabeled",
+  verbosity = 1
 )
 }
 \arguments{
@@ -50,4 +51,9 @@ desired by editing the code, though a future update may provide more control.
 Classifications are returned as a character vector named with the feature
 IDs even if the full dataset is not classified. Exit the classifier with
 the Escape key.
+}
+\examples{
+msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+peak_data <- makeXcmsObjFlat(msnexp_filled)
+manual_labels <- labelFeatsManual(peak_data)
 }

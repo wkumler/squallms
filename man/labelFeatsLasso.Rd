@@ -47,3 +47,8 @@ to provide interactive support in a browser environment and the
 \pkg{plotly} package for selection tools. Classified features are then 
 returned as a simple R object for downstream use.
 }
+\examples{
+msnexp_filled <- readRDS("vignettes/intro_xcms_filled.rds")
+peak_data <- makeXcmsObjFlat(msnexp_filled)
+lasso_labels <- labelFeatsLasso(peak_data)
+}
