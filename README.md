@@ -30,7 +30,7 @@ Distribution of model predictions relative to lasso labels:
 library(tidyverse)
 library(xcms)
 library(RaMS)
-devtools::load_all()
+library(devtools)
 mzML_files <- list.files(system.file("extdata", package = "RaMS"), full.names=TRUE)[c(3,5,6)]
 
 register(BPPARAM = SerialParam(progressbar = TRUE))

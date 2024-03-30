@@ -21,14 +21,18 @@ LazyData: true
 RoxygenNote: 7.2.3
 Imports:
     xcms,
+    RaMS,
     dplyr,
     tidyr,
-    RaMS,
+    tibble,
+    ggplot2,
     shiny,
     plotly,
-    ggplot2,
     data.table,
-    caret
+    caret,
+    stats,
+    graphics,
+    grDevices
 Suggests:
     knitr,
     rmarkdown,

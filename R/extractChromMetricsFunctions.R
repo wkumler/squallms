@@ -111,7 +111,7 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
     graphics::layout(1) # Fix this later
   }
   pcafeats %>%
-    pluck("rotation") %>%
+    .$rotation %>%
     as.data.frame() %>%
     select(1:5) %>%
     rownames_to_column("feature")

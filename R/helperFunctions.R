@@ -138,11 +138,17 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL,
 
 # Need to specify a few of these manually to avoid conflicts
 #' @rawNamespace import(xcms, except = c(span, groups, collect))
-#' @rawNamespace import(plotly, except = c(rename, groups, last_plot, filter))
 #' @import RaMS
-#' @rawNamespace import(dplyr, except = between)
+#' @rawNamespace import(dplyr, except = c(between, first, last))
 #' @import tidyr
+#' @import tibble
 #' @import ggplot2
 #' @import shiny
-#' @importFrom stats approx
+#' @rawNamespace import(plotly, except = c(rename, groups, last_plot, filter, layout))
+#' @import data.table
+#' @importFrom caret confusionMatrix
+#' @rawNamespace import(stats, except = c(lag, filter, smooth, sigma))
+#' @import graphics
+#' @import grDevices
+#' 
 NULL

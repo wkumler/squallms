@@ -36,10 +36,6 @@ BiocManager::install("squallms")
 library(squallms)
 ```
 
-```{r loadall_squallms, echo=FALSE, include=FALSE}
-devtools::load_all()
-```
-
 ## Peakpicking with XCMS
 
 For this demo, I'll be performing peakpicking with XCMS but it's worth noting that any peakpicking software could be used to produce a peak list as long as it can be turned into the proper input format (see "Calculating metrics of peak quality" below).
@@ -48,6 +44,7 @@ For this demo, I'll be performing peakpicking with XCMS but it's worth noting th
 suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
+  library(tibble)
   library(xcms)
   library(RaMS)
 })
@@ -190,7 +187,7 @@ ggsave(plot = tile_gp, filename = "intro_tile_gp.png", width = 6, height=3,
 
 pca_gp <- pcaoutput$pcamat %>%
   prcomp() %>%
-  pluck("rotation") %>%
+  .$rotation %>%
   .[,1:2] %>%
   as.data.frame() %>%
   rownames_to_column("feature") %>%
