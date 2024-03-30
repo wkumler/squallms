@@ -14,9 +14,15 @@
 
 Two labeling tools are provided for rapid MS feature classification. The first renders each feature as a chromatogram and accepts keybound inputs to assign classes to the feature. The second uses the PCA coordinates extracted in Step 1 to place features in a similarity space and triggers a small Shiny app to label clusters of compounds using the "lasso" tool. Both tools produce a two-column data frame of feature and classification used to train the logistic model detailed in Step 3.
 
+Built-in Shiny app for simultaneous lasso labeling of similar features:
+![](vignettes/intro_good_ss.png)
+
 ### Step 3: Logistic modeling
 
 After metrics have been extracted and labeling has occurred, a logistic model can be trained to predict MS feature class from the beta_cor and beta_snr values obtained in Step 1 (and additional metrics supplied by the user). This model returns the estimated likelihood of each peak being classified as "Good" or "Bad" which can then be used to remove features that fall below a given likelihood threshold. 
+
+Distribution of model predictions relative to lasso labels:
+![](vignettes/intro_model_spread.png)
 
 ## Demo:
 
@@ -43,13 +49,3 @@ class_labels <- labelFeatsLasso(peak_data, ms1_data=msdata$MS1, verbosity=1)
 cleaned_xcms_obj <- updateXcmsObjFeats(msnexp_filled, feat_metrics, class_labels,
                                        likelihood_threshold=0.5, verbosity=2)
 ```
-
-### Demo outputs
-
-Shiny app for simultaneous lasso labeling of similar features
-![](vignettes/intro_good_ss.png)
-
------
-
-Distribution of model predictions relative to lasso labels
-![](vignettes/intro_model_spread.png)
