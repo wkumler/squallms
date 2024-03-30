@@ -33,6 +33,10 @@ a classification (i.e. those that have NA values in existing_labels). If
 "Labeled", the classifier will target (and overwrite) existing labels. 
 Otherwise, the classifier will randomly target any feature whether previously
 classified or not.}
+
+\item{verbosity}{Scalar value between zero and two determining how much 
+diagnostic information is produced. Zero should return nothing, one should
+return text-based progress markers, and 2 will return diagnostic plots.}
 }
 \value{
 A character vector named with feature IDs containing the classifications

@@ -13,13 +13,13 @@ Description: squallms is a Bioconductor R package that implements a
   label MS features in bulk as high or low quality that are then passed to a 
   simple logistic model that produces a fully-labeled dataset suitable for 
   downstream analysis. 
-License: MIT
+License: MIT + file LICENSE
 URL: https://github.com/wkumler/squallms
 BugReports: https://github.com/wkumler/squallms/issues
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
-Depends:
+Imports:
     xcms,
     dplyr,
     tidyr,
@@ -27,8 +27,10 @@ Depends:
     shiny,
     plotly,
     ggplot2,
-    data.table
+    data.table,
+    caret
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    BiocStyle
 VignetteBuilder: knitr

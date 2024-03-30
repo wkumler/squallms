@@ -119,7 +119,7 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
 #' Extract metrics of chromatographic peak quality
 #' 
 #' This function takes flat-form XC-MS data (i.e. the format produced by
-#' \code{\link{makeXcmsObjectFlat}}) and calculates metrics of peak shape and
+#' `makeXcmsObjectFlat`) and calculates metrics of peak shape and
 #' similarity for downstream processing (e.g. by \code{\link{updateXcmsObjFeats}}).
 #' The core metrics are those described in \url{https://doi.org/10.1186/s12859-023-05533-4},
 #' corresponding to peak shape (correlation coefficient between the raw data

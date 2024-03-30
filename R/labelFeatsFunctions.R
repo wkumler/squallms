@@ -62,6 +62,9 @@ labelSingleFeat <- function(row_data, ms1_data){
 #' "Labeled", the classifier will target (and overwrite) existing labels. 
 #' Otherwise, the classifier will randomly target any feature whether previously
 #' classified or not.
+#' @param verbosity Scalar value between zero and two determining how much 
+#' diagnostic information is produced. Zero should return nothing, one should
+#' return text-based progress markers, and 2 will return diagnostic plots.
 #'
 #' @return A character vector named with feature IDs containing the classifications
 #' of each peak that was viewed during the interactive phase. NA values indicate
@@ -302,9 +305,6 @@ labelFeatsLasso <- function(peak_data, ms1_data=NULL, rt_window_width=1,
   if(verbosity>0){
     message("Loading libraries")
   }
-  library(shiny)
-  library(plotly)
-  
   if(is.null(ms1_data)){
     if(verbosity>0){
       message("Grabbing raw MS1 data")

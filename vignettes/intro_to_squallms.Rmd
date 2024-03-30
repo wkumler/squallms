@@ -46,7 +46,8 @@ For this demo, I'll be performing peakpicking with XCMS but it's worth noting th
 
 ```{r run_xcms, message=FALSE}
 suppressPackageStartupMessages({
-  library(tidyverse)
+  library(dplyr)
+  library(tidyr)
   library(xcms)
   library(RaMS)
 })
