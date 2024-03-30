@@ -6,3 +6,5 @@
 demodata/
 */*.mzML
 inst/doc
+/doc/
+/Meta/
