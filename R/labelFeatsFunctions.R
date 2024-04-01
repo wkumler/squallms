@@ -72,9 +72,25 @@ labelSingleFeat <- function(row_data, ms1_data){
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
+#' \dontrun{
+#' library(xcms)
+#' library(dplyr)
+#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#'   list.files(full.names=TRUE, pattern="[A-F].mzML")
+#' register(BPPARAM = SerialParam())
+#' cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
+#' obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
+#' pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
+#'                         binSize = 0.001, minSamples = 0)
+#' xcms_filled <- mzML_files %>%
+#'   readMSData(msLevel. = 1, mode = "onDisk") %>%
+#'   findChromPeaks(cwp) %>%
+#'   adjustRtime(obp) %>%
+#'   groupChromPeaks(pdp) %>%
+#'   fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' manual_labels <- labelFeatsManual(peak_data)
+#' }
 labelFeatsManual <- function(peak_data, ms1_data=NULL, existing_labels=NULL, 
                              selection="Unlabeled", verbosity=1){
   feat_data <- peak_data %>%
@@ -295,9 +311,25 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
+#' \dontrun{
+#' library(xcms)
+#' library(dplyr)
+#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#'   list.files(full.names=TRUE, pattern="[A-F].mzML")
+#' register(BPPARAM = SerialParam())
+#' cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
+#' obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
+#' pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
+#'                         binSize = 0.001, minSamples = 0)
+#' xcms_filled <- mzML_files %>%
+#'   readMSData(msLevel. = 1, mode = "onDisk") %>%
+#'   findChromPeaks(cwp) %>%
+#'   adjustRtime(obp) %>%
+#'   groupChromPeaks(pdp) %>%
+#'   fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' lasso_labels <- labelFeatsLasso(peak_data)
+#' }
 labelFeatsLasso <- function(peak_data, ms1_data=NULL, rt_window_width=1, 
                             ppm_window_width=5, verbosity=1){
   if(verbosity>0){

@@ -24,11 +24,27 @@
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
+#' \dontrun{
+#' library(xcms)
+#' library(dplyr)
+#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#'   list.files(full.names=TRUE, pattern="[A-F].mzML")
+#' register(BPPARAM = SerialParam())
+#' cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
+#' obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
+#' pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
+#'                         binSize = 0.001, minSamples = 0)
+#' xcms_filled <- mzML_files %>%
+#'   readMSData(msLevel. = 1, mode = "onDisk") %>%
+#'   findChromPeaks(cwp) %>%
+#'   adjustRtime(obp) %>%
+#'   groupChromPeaks(pdp) %>%
+#'   fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
 #' lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
 #' feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
+#' }
 logModelFeatProb <- function(feature_metrics, feature_labels, 
                              log_formula=feat_class~med_cor+med_snr,
                              verbosity=2){
@@ -84,11 +100,27 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
+#' \dontrun{
+#' library(xcms)
+#' library(dplyr)
+#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#'   list.files(full.names=TRUE, pattern="[A-F].mzML")
+#' register(BPPARAM = SerialParam())
+#' cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
+#' obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
+#' pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
+#'                         binSize = 0.001, minSamples = 0)
+#' xcms_filled <- mzML_files %>%
+#'   readMSData(msLevel. = 1, mode = "onDisk") %>%
+#'   findChromPeaks(cwp) %>%
+#'   adjustRtime(obp) %>%
+#'   groupChromPeaks(pdp) %>%
+#'   fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
 #' lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
 #' feat_classes <- logModelFeatQuality(feat_metrics, lasso_classes)
+#' }
 logModelFeatQuality <- function(feature_metrics, feature_labels, 
                                 log_formula=feat_class~med_cor+med_snr,
                                 likelihood_threshold=0.5, 
@@ -130,11 +162,27 @@ logModelFeatQuality <- function(feature_metrics, feature_labels,
 #' @export
 #'
 #' @examples
-#' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
+#' \dontrun{
+#' library(xcms)
+#' library(dplyr)
+#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#'   list.files(full.names=TRUE, pattern="[A-F].mzML")
+#' register(BPPARAM = SerialParam())
+#' cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
+#' obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
+#' pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
+#'                         binSize = 0.001, minSamples = 0)
+#' xcms_filled <- mzML_files %>%
+#'   readMSData(msLevel. = 1, mode = "onDisk") %>%
+#'   findChromPeaks(cwp) %>%
+#'   adjustRtime(obp) %>%
+#'   groupChromPeaks(pdp) %>%
+#'   fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
 #' lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
 #' msnexp_filled <- updateXcmsObjFeats(msnexp_filled, feat_metrics, lasso_classes)
+#' }
 updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
                                log_formula=feat_class~med_cor+med_snr,
                                likelihood_threshold=0.5, verbosity=2){
