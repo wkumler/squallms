@@ -99,7 +99,6 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
   pcafeats <- prcomp(pcamat_nounitvar, center = TRUE, scale. = TRUE)
   if(verbosity>1){
     plot(pcafeats)
-    graphics::layout(matrix(c(1,2,3,4), ncol = 2, byrow = TRUE))
     pcafeats$x[,1] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC1")
     pcafeats$x[,2] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
@@ -108,10 +107,9 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
       matplot(type="l", col="black", main="PC3")
     pcafeats$x[,4] %>% matrix(ncol = length(unique(interp_df$filename))) %>% 
       matplot(type="l", col="black", main="PC4")
-    graphics::layout(1) # Fix this later
   }
   pcafeats %>%
-    .$rotation %>%
+    .data$rotation %>%
     as.data.frame() %>%
     select(1:5) %>%
     rownames_to_column("feature")

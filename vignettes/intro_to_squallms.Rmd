@@ -12,7 +12,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  crop = NULL
 )
 ```
 
@@ -32,7 +33,7 @@ BiocManager::install("squallms")
 
 `squallms` makes extensive use of the tidyverse for data shaping and organization as well as the `RaMS` package for MS data extraction. It also uses the `shiny` and `plotly` packages for interactive data visualization.
 
-```{r library_squallms, message=FALSE, eval=FALSE}
+```{r library_squallms, message=FALSE}
 library(squallms)
 ```
 
@@ -45,6 +46,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
   library(tibble)
+  library(ggplot2)
   library(xcms)
   library(RaMS)
 })
@@ -182,8 +184,10 @@ tile_gp <- pcaoutput$interp_df %>%
   theme(axis.text=element_blank(), axis.ticks = element_blank(),
         legend.position = "none") +
   labs(x="Scaled retention time", y="Individual files")
-ggsave(plot = tile_gp, filename = "intro_tile_gp.png", width = 6, height=3, 
+if(interactive()){
+  ggsave(plot = tile_gp, filename = "intro_tile_gp.png", width = 6, height=3, 
        units = "in", path = "vignettes", device = "png", dpi=120)
+}
 
 pca_gp <- pcaoutput$pcamat %>%
   prcomp() %>%
@@ -199,8 +203,10 @@ pca_gp <- pcaoutput$pcamat %>%
   scale_x_continuous(expand = expansion(0.2)) +
   labs(x="Principal component 1", y="Principal component 2") +
   theme_bw()
-ggsave(plot = pca_gp, filename = "intro_pca_gp.png", width = 3, height=4, 
+if(interactive()){
+  ggsave(plot = pca_gp, filename = "intro_pca_gp.png", width = 3, height=4, 
        units = "in", path = "vignettes", device = "png", dpi=120)
+}
 ```
 
 This signal can be seen visually in the figure below. Good peaks have a distinctly lighter center and darker sides corresponding to high values at the center of the peak and low values at the edges of the window. The pattern's visible across multiple files as a ridge running vertically down each feature's small multiple plot. In this case, features FT030, FT040, FT041, and FT044 look like high-quality features. Noise features have no obvious pattern, so the PCA won't be able to extract signal from them as a dominant component. The other pattern are the features (FT031, FT042, FT048) that are intense at the beginning or at the end, corresponding to the noise peaks that CentWave loves picking out so much.
@@ -248,12 +254,13 @@ manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1, select
 ```
 
 ```{r caret_confusion}
+suppressPackageStartupMessages(library(caret))
 data.frame(manual=manual_classes, lasso=lasso_classes) %>%
   filter(!is.na(manual) & !is.na(lasso))
 
 data.frame(manual=factor(manual_classes), lasso=factor(lasso_classes)) %>%
   filter(!is.na(manual)) %>%
-  with(caret::confusionMatrix(lasso, manual, positive="Good"))
+  with(confusionMatrix(lasso, manual, positive="Good"))
 ```
 
 If there are differences between the two, we can replace the lasso labels with the (generally) more reliable manual labels.
@@ -269,8 +276,10 @@ Of course, both labeling methods are designed to return partially-labeled datase
 
 ```{r logModelFeatProb, warning=FALSE}
 pred_probs <- logModelFeatProb(shape_metrics, class_labels)
-ggsave("intro_model_spread.png", plot = last_plot(), device = "png",
+if(interactive()){
+  ggsave("intro_model_spread.png", plot = last_plot(), device = "png",
        path = "vignettes", width = 6, height = 4, units = "in", dpi=120)
+}
 hist(pred_probs, breaks = 20, main = NULL, xlab = "Logistic likelihood")
 ```
 

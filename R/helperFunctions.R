@@ -17,6 +17,7 @@
 #' peakidx) and peak information (from chromPeaks: mz, mzmin, mzmax, rt, rtmin,
 #' rtmax, into, intb, maxo, sn, sample) as well as the full path to the 
 #' associated file and the file name alone (filepath and filename).
+#' 
 #' @export
 #'
 #' @examples
@@ -76,7 +77,7 @@ makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
 #' @examples
 #' msnexp_filled <- readRDS(system.file("extdata", "intro_xcms_filled.rds", package="squallms"))
 #' peak_data <- makeXcmsObjFlat(msnexp_filled)
-#' msdata <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=0)
+#' msdata <- RaMS::grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=0)
 #' pixel_pca <- pickyPCA(peak_data, msdata$MS1)
 pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL, 
                      ppm_window_width=NULL, verbosity=1){
@@ -134,21 +135,33 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL,
   return(list(interp_df=interp_df, pcamat=pcamat))
 }
 
+# Weird NOTE dodges ----
+utils::globalVariables("closest") #https://dplyr.tidyverse.org/articles/in-packages.html#join-helpers
+utils::globalVariables(c('PC1', 'PC2', 'adj_rt', 'agg_int_avg', 'agg_int_iqr', 
+                       'approx_int', 'approx_rt', 'beta_cor', 'beta_snr', 
+                       'cluster', 'feat_class', 'feat_mzmed', 'beta_vals', 
+                       'feat_rtmed', 'feature', 'filename', 'filepath', 'int', 
+                       'med_cor', 'med_snr', 'mtemp', 'mzmax', 'mzmed', 'mzmin', 
+                       'npeaks', 'peak_mz', 'peak_rt', 'peakidx', 'pred', 
+                       'pred_class', 'pred_prob', 'raw_rt', 'rtemp', 'rtmax', 
+                       'rtmed', 'rtmin', 'x', 'y', '.data'))
+
 # Import area ----
 
 # Need to specify a few of these manually to avoid conflicts
 #' @rawNamespace import(xcms, except = c(span, groups, collect))
-#' @import RaMS
+#' @importFrom MSnbase fileNames fromFile
+#' @importFrom RaMS grabMSdata pmppm qplotMS1data
 #' @rawNamespace import(dplyr, except = c(between, first, last))
-#' @import tidyr
-#' @import tibble
+#' @import tidyr 
+#' @importFrom tibble rownames_to_column
 #' @import ggplot2
 #' @import shiny
-#' @rawNamespace import(plotly, except = c(rename, groups, last_plot, filter, layout))
+#' @rawNamespace import(plotly, except = c(rename, groups, last_plot, filter))
 #' @import data.table
 #' @importFrom caret confusionMatrix
 #' @rawNamespace import(stats, except = c(lag, filter, smooth, sigma))
-#' @import graphics
-#' @import grDevices
-#' 
+#' @rawNamespace import(graphics, except = c(layout))
+#' @importFrom grDevices dev.new dev.off getGraphicsEvent
+#' @importFrom utils head globalVariables
 NULL

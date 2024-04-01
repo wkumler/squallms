@@ -202,9 +202,9 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
   })
   kmeaned_df <- reactive({
     input$kmeans_click
-    pcaoutput$rotation[,1:input$n_kmeans_dims] %>%
-      as.data.frame() %>%
-      mutate(cluster=factor(kmeans(., centers=input$n_kmeans_groups)$cluster)) %>%
+    sel_kmeans <- as.data.frame(pcaoutput$rotation[,1:input$n_kmeans_dims])
+    sel_kmeans %>% 
+      mutate(cluster=factor(kmeans(sel_kmeans, centers=input$n_kmeans_groups)$cluster)) %>%
       rownames_to_column("feature")
   })
   output$plotlypca <- renderPlotly({
@@ -218,9 +218,7 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
   output$kmeans_avgpeak <- renderPlot({
     req(input$n_kmeans_groups)
     req(input$n_kmeans_dims)
-    clustergroups <- kmeaned_df() %>% 
-      split(.$cluster) %>%
-      lapply(`[[`, "feature")
+    clustergroups <- split(kmeaned_df(), kmeaned_df()$cluster) %>% lapply(`[[`, "feature")
     plot_dt <- interp_df %>%
       left_join(kmeaned_df(),by="feature") %>%
       group_by(approx_rt, cluster) %>%
