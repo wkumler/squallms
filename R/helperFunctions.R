@@ -142,6 +142,7 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width=NULL,
     select(-mz, -rt) %>%
     left_join(ms1_data, join_args) %>%
     select(feature, filename, mz, rt, int) %>%
+    drop_na() %>%
     group_by(feature, filename) %>%
     filter(n()>2) %>%
     summarise(approx_int=list(
