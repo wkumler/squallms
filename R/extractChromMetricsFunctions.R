@@ -175,6 +175,17 @@ pickPCAPixels <- function(peak_data, ms1_data, verbosity=1){
 extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL, 
                                 rt_window_width=NULL, ppm_window_width=NULL, 
                                 verbosity=0){
+  if(!is(peak_data, "data.frame")){
+    stop("peak_data must be a data.frame object")
+  }
+  necessary_colnames <- c("feature", "mz", "mzmin", "mzmax", "rt", "rtmin", 
+                          "rtmax", "filepath", "filename")
+  missing_colnames <- setdiff(necessary_colnames, colnames(peak_data))
+  if(length(missing_colnames)!=0){
+    stop(paste("peak_data is missing necessary column(s):", 
+               paste(missing_filenames, collapse = ", ")))
+  }
+  
   if(is.null(ms1_data)){
     if(verbosity>0){
       message("Grabbing raw MS1 data")
