@@ -91,7 +91,7 @@ qscoreCalculator <- function(rt, int){
   return(c(beta_snr=SNR, beta_cor=peak_cor))
 }
 scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
-pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width, verbosity=1){
+pickPCAPixels <- function(peak_data, ms1_data, verbosity=1){
   pickyPCAoutput <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)
   interp_df <- pickyPCAoutput$interp_df
   pcamat <- pickyPCAoutput$pcamat
@@ -143,18 +143,13 @@ pickPCAPixels <- function(peak_data, ms1_data, rt_window_width, ppm_window_width
 #' @param ms1_data Optional data.table object produced by RaMS containing MS1
 #' data with columns for filename, rt, mz, and int. If not provided, the files
 #' are detected from the filepath column in peak_data.
-#' @param rt_window_width The width of the retention time window that should
-#' be used for PCA construction, in minutes.
-#' @param ppm_window_width The width of the m/z window that should be used for
-#' PCA construction, in parts per million.
 #' @param verbosity Scalar value between zero and two determining how much 
 #' diagnostic information is produced. Zero should return nothing, one should
 #' return text-based progress markers, and 2 will return diagnostic plots.
 #'
 #' @return A data.frame containing one row for each feature in peak_data, with
-#' columns containing the median peak shape value (med_cor), the median SNR
-#' value (med_snr), and coordinates of the feature in
-#' the first 5 principal components space.
+#' columns containing the median peak shape value (med_cor), and the median SNR
+#' value (med_snr).
 #' @export
 #'
 #' @examples

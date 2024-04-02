@@ -303,7 +303,8 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
 #' \pkg{plotly} package for selection tools. Classified features are then 
 #' returned as a simple R object for downstream use.
 #'
-#' @inheritParams extractChromMetrics
+#' @inheritParams pickyPCA
+#' 
 #'
 #' @return A character vector named with feature IDs containing the classifications
 #' of each peak that was viewed during the interactive phase. NA values indicate

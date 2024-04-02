@@ -81,6 +81,10 @@ makeXcmsObjFlat <- function(xcms_obj, revert_rts=TRUE){
 #' Internal function, mostly.
 #'
 #' @inheritParams extractChromMetrics
+#' @param rt_window_width The width of the retention time window that should
+#' be used for PCA construction, in minutes.
+#' @param ppm_window_width The width of the m/z window that should be used for
+#' PCA construction, in parts per million.
 #'
 #' @return A list with two named components, interp_df and pcamat. interp_df
 #' is the MS1 data associated with each peak interpolated to a retention time

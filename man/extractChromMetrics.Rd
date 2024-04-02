@@ -29,21 +29,14 @@ implementations.}
 data with columns for filename, rt, mz, and int. If not provided, the files
 are detected from the filepath column in peak_data.}
 
-\item{rt_window_width}{The width of the retention time window that should
-be used for PCA construction, in minutes.}
-
-\item{ppm_window_width}{The width of the m/z window that should be used for
-PCA construction, in parts per million.}
-
 \item{verbosity}{Scalar value between zero and two determining how much 
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
 \value{
 A data.frame containing one row for each feature in peak_data, with
-columns containing the median peak shape value (med_cor), the median SNR
-value (med_snr), and coordinates of the feature in
-the first 5 principal components space.
+columns containing the median peak shape value (med_cor), and the median SNR
+value (med_snr).
 }
 \description{
 This function takes flat-form XC-MS data (i.e. the format produced by
