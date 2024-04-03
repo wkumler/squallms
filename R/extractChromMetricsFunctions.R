@@ -54,33 +54,8 @@ qscoreCalculator <- function(rt, int, na.rm = TRUE) {
     # Return the quality score
     return(c(beta_snr = SNR, beta_cor = peak_cor))
 }
-pickPCAPixels <- function(peak_data, ms1_data, verbosity = 1) {
-    pickyPCAoutput <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)
-    interp_df <- pickyPCAoutput$interp_df
-    pcamat <- pickyPCAoutput$pcamat
-    pcamat_nounitvar <- pcamat[, !apply(pcamat, 2, var) == 0]
-    pcafeats <- prcomp(pcamat_nounitvar, center = TRUE, scale. = TRUE)
-    if (verbosity > 1) {
-        plot(pcafeats)
-        pcafeats$x[, 1] %>%
-            matrix(ncol = length(unique(interp_df$filename))) %>%
-            matplot(type = "l", col = "black", main = "PC1")
-        pcafeats$x[, 2] %>%
-            matrix(ncol = length(unique(interp_df$filename))) %>%
-            matplot(type = "l", col = "black", main = "PC2")
-        pcafeats$x[, 3] %>%
-            matrix(ncol = length(unique(interp_df$filename))) %>%
-            matplot(type = "l", col = "black", main = "PC3")
-        pcafeats$x[, 4] %>%
-            matrix(ncol = length(unique(interp_df$filename))) %>%
-            matplot(type = "l", col = "black", main = "PC4")
-    }
-    pcafeats %>%
-        .data$rotation %>%
-        as.data.frame() %>%
-        select(1:5) %>%
-        rownames_to_column("feature")
-}
+
+
 #' Extract metrics of chromatographic peak quality
 #'
 #' This function takes flat-form XC-MS data (i.e. the format produced by
@@ -178,15 +153,5 @@ extractChromMetrics <- function(peak_data, recalc_betas = FALSE, ms1_data = NULL
                 med_snr = median(beta_snr, na.rm = TRUE)
             )
     }
-
-    # if(verbosity>0){
-    #   message("Constructing pixel matrix and performing PCA")
-    # }
-    # pca_df <- pickPCAPixels(peak_data, ms1_data = ms1_data,
-    #                         rt_window_width = rt_window_width,
-    #                         ppm_window_width = ppm_window_width,
-    #                         verbosity=verbosity)
-
-    # full_join(beta_df, pca_df, by="feature")
     beta_df
 }
