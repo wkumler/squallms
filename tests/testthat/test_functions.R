@@ -9,7 +9,9 @@ test_that("makeXcmsObjFlat works", {
   expect_contains(names(peak_data), "rtmax")
   expect_contains(names(peak_data), "filename")
   expect_contains(names(peak_data), "filepath")
-  
+})
+
+test_that("makeXcmsObjFlat demo specifics", {
   expect_equal(nrow(peak_data), 626)
   expect_equal(length(unique(peak_data$feature)), 195)
   expect_equal(peak_data$feature[626], "FT195")
@@ -48,6 +50,7 @@ test_that("extractChromMetrics works", {
 })
 
 test_that("logModelFeatProb works", {
+  # lasso_classes <- labelFeatsLasso(peak_data, msdata$MS1)
   lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", 
                                        package="squallms"))
   feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)

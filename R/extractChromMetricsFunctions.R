@@ -44,19 +44,18 @@ calcBetaCoefs <- function(peak_data, ms1_data, verbosity=1){
     left_join(ms1_data, join_args) %>%
     distinct()
   beta_val_df <- joined_df %>%
-    drop_na() %>%
-    group_by(filename, feature) %>%
+    group_by(feature, filename) %>%
     summarise(peak_mz=weighted.mean(mz, int), peak_rt=median(rt), 
-              beta_vals=list(qscoreCalculator(rt, int)), .groups = "drop") %>%
-    unnest_wider(beta_vals) %>%
-    group_by(feature) %>%
-    summarise(med_mz=median(peak_mz),
-              med_rt=median(peak_rt),
+              beta_vals=list(qscoreCalculator(rt, int)), .groups = "drop_last") %>%
+    unnest_wider(beta_vals, simplify = FALSE) %>%
+    summarise(med_mz=median(peak_mz, na.rm=TRUE),
+              med_rt=median(peak_rt, na.rm=TRUE),
               med_cor=median(beta_cor, na.rm=TRUE), 
-              med_snr=median(beta_snr, na.rm=TRUE)
-    )
+              med_snr=median(beta_snr, na.rm=TRUE))
 }
-qscoreCalculator <- function(rt, int){
+qscoreCalculator <- function(rt, int, na.rm=TRUE){
+  rt <- rt[!is.na(rt)]
+  int <- int[!is.na(int)]
   #Check for bogus EICs
   if(length(rt)<5){
     return(c(beta_snr=NA, beta_cor=NA))
@@ -173,7 +172,6 @@ pickPCAPixels <- function(peak_data, ms1_data, verbosity=1){
 #' feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE)
 #' }
 extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL, 
-                                rt_window_width=NULL, ppm_window_width=NULL, 
                                 verbosity=0){
   if(!is(peak_data, "data.frame")){
     stop("peak_data must be a data.frame object")
@@ -183,7 +181,7 @@ extractChromMetrics <- function(peak_data, recalc_betas=FALSE, ms1_data=NULL,
   missing_colnames <- setdiff(necessary_colnames, colnames(peak_data))
   if(length(missing_colnames)!=0){
     stop(paste("peak_data is missing necessary column(s):", 
-               paste(missing_filenames, collapse = ", ")))
+               paste(missing_colnames, collapse = ", ")))
   }
   
   if(is.null(ms1_data)){
