@@ -1,42 +1,4 @@
 
-
-backToRawRTs <- function(peak_data, xcms_obj){
-  rt_cors <- data.frame(
-    sample=fromFile(xcms_obj),
-    adj_rt=rtime(xcms_obj),
-    raw_rt=rtime(suppressMessages(dropAdjustedRtime(xcms_obj)))
-  )
-  # peak_data %>%
-  #   select(sample, rtmin) %>%
-  #   left_join(rt_cors, by=c("sample", rtmin="adj_rt")) %>%
-  #   mutate(rtmin=raw_rt) %>%
-  #   select(-raw_rt)
-  # Non-equi join below handles inexact matching due to gap filled medians
-  peak_data %>%
-    left_join(rt_cors, by=join_by("sample", closest(rtmin<="adj_rt"))) %>%
-    mutate(rtmin=raw_rt) %>%
-    select(-adj_rt, -raw_rt) %>%
-    left_join(rt_cors, by=join_by("sample", closest(rtmax>="adj_rt"))) %>%
-    mutate(rtmax=raw_rt) %>%
-    select(-adj_rt, -raw_rt) %>%
-    left_join(rt_cors, by=join_by("sample", closest(rt>="adj_rt"))) %>%
-    mutate(rt=raw_rt) %>%
-    select(-adj_rt, -raw_rt)
-  
-  # Unit test
-  # xcms_obj <- readRDS('demodata/falkor/msnexp_filled.rds')
-  # msdata <- grabMSdata(fileNames(xcms_obj))
-  # msdata$MS1[mz%between%pmppm(118.0865, 10)] %>% qplotMS1data() +
-  #   geom_vline(xintercept = unadjusted_rts$rtmin/60, color="green") +
-  #   geom_vline(xintercept = unadjusted_rts$rtmax/60, color="red")
-  # adjusted_rts <- peak_data %>%
-  #   filter(feat_mzmed%between%pmppm(118.0865)) %>%
-  #   select(sample, mz, rt, rtmin, rtmax)
-  # unadjusted_rts <- peak_data %>%
-  #   backToRawRTs(xcms_obj) %>%
-  #   filter(feat_mzmed%between%pmppm(118.0865)) %>%
-  #   select(sample, mz, rt, rtmin, rtmax)
-}
 calcBetaCoefs <- function(peak_data, ms1_data, verbosity=1){
   join_args <- join_by("filename", between(y$rt, x$rtmin, x$rtmax), between(y$mz, x$mzmin, x$mzmax))
   joined_df <- peak_data %>%
