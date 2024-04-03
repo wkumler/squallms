@@ -120,7 +120,6 @@ pickPCAPixels <- function(peak_data, ms1_data, verbosity = 1) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -138,9 +137,8 @@ pickPCAPixels <- function(peak_data, ms1_data, verbosity = 1) {
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE)
-#' }
 extractChromMetrics <- function(peak_data, recalc_betas = FALSE, ms1_data = NULL,
                                 verbosity = 0) {
     if (!is(peak_data, "data.frame")) {

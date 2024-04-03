@@ -23,7 +23,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -41,11 +40,10 @@
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
 #' lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
 #' feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
-#' }
 logModelFeatProb <- function(feature_metrics, feature_labels,
                              log_formula = feat_class ~ med_cor + med_snr,
                              verbosity = 2) {
@@ -106,7 +104,6 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -124,11 +121,10 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
 #' lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
 #' feat_classes <- logModelFeatQuality(feat_metrics, lasso_classes)
-#' }
 logModelFeatQuality <- function(feature_metrics, feature_labels,
                                 log_formula = feat_class ~ med_cor + med_snr,
                                 likelihood_threshold = 0.5,

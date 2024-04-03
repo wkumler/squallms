@@ -14,7 +14,7 @@ labelFeatsManual(
 }
 \arguments{
 \item{peak_data}{Flat-form XC-MS data with columns for the bounding box of
-a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature 
+a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature
 ID. Must be provided WITHOUT retention time correction for proper matching
 to the values in the raw data.}
 
@@ -30,11 +30,11 @@ classifications.}
 \item{selection}{Either the string "Labeled" or "Unlabeled". If "Unlabeled",
 the classifier will target entries in the dataset that have not yet received
 a classification (i.e. those that have NA values in existing_labels). If
-"Labeled", the classifier will target (and overwrite) existing labels. 
+"Labeled", the classifier will target (and overwrite) existing labels.
 Otherwise, the classifier will randomly target any feature whether previously
 classified or not.}
 
-\item{verbosity}{Scalar value between zero and two determining how much 
+\item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
@@ -57,23 +57,25 @@ IDs even if the full dataset is not classified. Exit the classifier with
 the Escape key.
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-peak_data <- makeXcmsObjFlat(msnexp_filled)
-manual_labels <- labelFeatsManual(peak_data)
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+peak_data <- makeXcmsObjFlat(xcms_filled)
+if(interactive()){
+    manual_labels <- labelFeatsManual(peak_data)
 }
 }

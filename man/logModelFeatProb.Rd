@@ -12,7 +12,7 @@ logModelFeatProb(
 )
 }
 \arguments{
-\item{feature_metrics}{A data.frame with columns used to construct the 
+\item{feature_metrics}{A data.frame with columns used to construct the
 feature quality model.}
 
 \item{feature_labels}{A character vector named with feature IDs and entries
@@ -22,7 +22,7 @@ corresponding to the peak quality (either "Good", "Bad", or NA).}
 the feature metrics. This formula is passed to `glm` as-is, so make sure that
 the predictive features exist in the feature_metrics data.frame.}
 
-\item{verbosity}{Scalar value between zero and two determining how much 
+\item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
@@ -31,7 +31,7 @@ A numeric vector of probabilities returned by the logistic model
 named by feature ID
 }
 \description{
-After metrics have been extracted (typically with `extractChromMetrics`) and 
+After metrics have been extracted (typically with `extractChromMetrics`) and
 labeling has occurred (typically with `labelFeatsManual` or `labelFeatsLasso`),
 a model can be built to robustly classify the peaks that were not labeled
 based on the metrics. The default regression equation fits the med_cor and
@@ -39,25 +39,25 @@ med_snr columns in feature_metrics to the feature_labels, but additional
 metrics can be passed as well (but be careful of overfitting!).
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-peak_data <- makeXcmsObjFlat(msnexp_filled)
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+peak_data <- makeXcmsObjFlat(xcms_filled)
 feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
-lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
+lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
 feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
-}
 }

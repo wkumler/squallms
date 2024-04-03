@@ -72,7 +72,6 @@ labelSingleFeat <- function(row_data, ms1_data) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -90,8 +89,9 @@ labelSingleFeat <- function(row_data, ms1_data) {
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
-#' manual_labels <- labelFeatsManual(peak_data)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
+#' if(interactive()){
+#'     manual_labels <- labelFeatsManual(peak_data)
 #' }
 labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
                              selection = "Unlabeled", verbosity = 1) {
@@ -323,7 +323,6 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -341,8 +340,9 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
-#' lasso_labels <- labelFeatsLasso(peak_data)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
+#' if(interactive()){
+#'     lasso_labels <- labelFeatsLasso(peak_data)
 #' }
 labelFeatsLasso <- function(peak_data, ms1_data = NULL, rt_window_width = 1,
                             ppm_window_width = 5, verbosity = 1) {

@@ -4,7 +4,7 @@
 \alias{makeXcmsObjFlat}
 \title{Make an XCMS object flat}
 \usage{
-makeXcmsObjFlat(xcms_obj, revert_rts = TRUE)
+makeXcmsObjFlat(xcms_obj, revert_rts = TRUE, verbosity = 0)
 }
 \arguments{
 \item{xcms_obj}{A XCMSnExp object produced by the typical XCMS workflow which
@@ -14,35 +14,35 @@ should include retention time correction and peak correspondence and filling}
 times found in the XCMS object are propagated or returned as-is}
 }
 \value{
-A data.frame with columns for feature information (from 
+A data.frame with columns for feature information (from
 featureDefinitions: feature, feat_mzmed, feat_rtmed, feat_npeaks, and
 peakidx) and peak information (from chromPeaks: mz, mzmin, mzmax, rt, rtmin,
-rtmax, into, intb, maxo, sn, sample) as well as the full path to the 
+rtmax, into, intb, maxo, sn, sample) as well as the full path to the
 associated file and the file name alone (filepath and filename).
 }
 \description{
 XCMSnExp objects are complicated S4 objects that make
 it difficult to access information about the features and their associated
-peaks. This function turns the output into a "flat" file format (a 
+peaks. This function turns the output into a "flat" file format (a
 data.frame) so it can interact with tidyverse functions more easily.
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-makeXcmsObjFlat(msnexp_filled)
-}
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+makeXcmsObjFlat(xcms_filled)
 }

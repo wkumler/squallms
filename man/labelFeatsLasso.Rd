@@ -14,7 +14,7 @@ labelFeatsLasso(
 }
 \arguments{
 \item{peak_data}{Flat-form XC-MS data with columns for the bounding box of
-a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature 
+a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature
 ID. Must be provided WITHOUT retention time correction for proper matching
 to the values in the raw data.}
 
@@ -28,7 +28,7 @@ be used for PCA construction, in minutes.}
 \item{ppm_window_width}{The width of the m/z window that should be used for
 PCA construction, in parts per million.}
 
-\item{verbosity}{Scalar value between zero and two determining how much 
+\item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
@@ -41,30 +41,32 @@ those features that were not classified.
 This function interpolates multi-file chromatograms to a shared set of retention
 time points then performs a PCA to place similar chromatograms near each other
 in a reduced dimensionality space. Features can then be labeled in groups
-instead of one at a time, massively reducing the burden of creating a 
+instead of one at a time, massively reducing the burden of creating a
 high-quality dataset. This implementation relies on R's \pkg{shiny} package
-to provide interactive support in a browser environment and the 
-\pkg{plotly} package for selection tools. Classified features are then 
+to provide interactive support in a browser environment and the
+\pkg{plotly} package for selection tools. Classified features are then
 returned as a simple R object for downstream use.
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-peak_data <- makeXcmsObjFlat(msnexp_filled)
-lasso_labels <- labelFeatsLasso(peak_data)
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+peak_data <- makeXcmsObjFlat(xcms_filled)
+if(interactive()){
+    lasso_labels <- labelFeatsLasso(peak_data)
 }
 }

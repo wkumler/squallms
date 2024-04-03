@@ -22,7 +22,6 @@ scale_zero_one <- function(x) (x - min(x)) / (max(x) - min(x))
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -40,8 +39,7 @@ scale_zero_one <- function(x) (x - min(x)) / (max(x) - min(x))
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' makeXcmsObjFlat(msnexp_filled)
-#' }
+#' makeXcmsObjFlat(xcms_filled)
 makeXcmsObjFlat <- function(xcms_obj, revert_rts = TRUE, verbosity = 0) {
     peak_data_long <- xcms_obj %>%
         chromPeaks() %>%
@@ -144,7 +142,6 @@ backToRawRTs <- function(peak_data, xcms_obj, verbosity = 0) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -162,10 +159,9 @@ backToRawRTs <- function(peak_data, xcms_obj, verbosity = 0) {
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
 #' msdata <- RaMS::grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity = 0)
 #' pixel_pca <- pickyPCA(peak_data, msdata$MS1)
-#' }
 pickyPCA <- function(peak_data, ms1_data, rt_window_width = NULL,
                      ppm_window_width = NULL, verbosity = 1) {
     if (is.null(rt_window_width)) {
@@ -241,7 +237,6 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width = NULL,
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(xcms)
 #' library(dplyr)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
@@ -259,11 +254,10 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width = NULL,
 #'     adjustRtime(obp) %>%
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
-#' peak_data <- makeXcmsObjFlat(msnexp_filled)
+#' peak_data <- makeXcmsObjFlat(xcms_filled)
 #' feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
 #' lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
-#' msnexp_filled <- updateXcmsObjFeats(msnexp_filled, feat_metrics, lasso_classes)
-#' }
+#' xcms_filled <- updateXcmsObjFeats(xcms_filled, feat_metrics, lasso_classes)
 updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
                                log_formula = feat_class ~ med_cor + med_snr,
                                likelihood_threshold = 0.5, verbosity = 2) {
@@ -292,6 +286,8 @@ updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
     #   processHistory()
     xcms_obj
 }
+
+
 # Weird NOTE dodges ----
 utils::globalVariables("closest") # https://dplyr.tidyverse.org/articles/in-packages.html#join-helpers
 utils::globalVariables(c(

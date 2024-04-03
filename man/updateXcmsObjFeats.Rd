@@ -17,7 +17,7 @@ updateXcmsObjFeats(
 \item{xcms_obj}{The XCMS object from which features were initially extracted,
 usually with `extractChromMetrics`}
 
-\item{feature_metrics}{A data.frame with columns used to construct the 
+\item{feature_metrics}{A data.frame with columns used to construct the
 feature quality model.}
 
 \item{feature_labels}{A character vector named with feature IDs and entries
@@ -30,7 +30,7 @@ the predictive features exist in the feature_metrics data.frame.}
 \item{likelihood_threshold}{A scalar numeric above which features will be
 kept if their predicted probability exceeds.}
 
-\item{verbosity}{Scalar value between zero and two determining how much 
+\item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
@@ -39,32 +39,32 @@ The initial xcms_obj but only containing features that exceed the
 provided quality threshold (as established in likelihood space)
 }
 \description{
-After metrics have been extracted (typically with `extractChromMetrics`) and 
+After metrics have been extracted (typically with `extractChromMetrics`) and
 labeling has occurred (typically with `labelFeatsManual` or `labelFeatsLasso`),
 low quality features can be removed from the XCMS object to improve downstream
 processing. This function wraps `logModelFeatQuality` and automatically edits
 the features within the provided XCMS object.
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-peak_data <- makeXcmsObjFlat(msnexp_filled)
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+peak_data <- makeXcmsObjFlat(xcms_filled)
 feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
-lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
-msnexp_filled <- updateXcmsObjFeats(msnexp_filled, feat_metrics, lasso_classes)
-}
+lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
+xcms_filled <- updateXcmsObjFeats(xcms_filled, feat_metrics, lasso_classes)
 }

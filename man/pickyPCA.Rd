@@ -14,7 +14,7 @@ pickyPCA(
 }
 \arguments{
 \item{peak_data}{Flat-form XC-MS data with columns for the bounding box of
-a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature 
+a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature
 ID. Must be provided WITHOUT retention time correction for proper matching
 to the values in the raw data.}
 
@@ -28,7 +28,7 @@ be used for PCA construction, in minutes.}
 \item{ppm_window_width}{The width of the m/z window that should be used for
 PCA construction, in parts per million.}
 
-\item{verbosity}{Scalar value between zero and two determining how much 
+\item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
@@ -36,31 +36,31 @@ return text-based progress markers, and 2 will return diagnostic plots.}
 A list with two named components, interp_df and pcamat. interp_df
 is the MS1 data associated with each peak interpolated to a retention time
 spacing shared across the feature. pcamat is the result of cleaning this
-object up, pivoting it wider, and converting it to a matrix so that a PCA 
+object up, pivoting it wider, and converting it to a matrix so that a PCA
 can be performed.
 }
 \description{
 Internal function, mostly.
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-peak_data <- makeXcmsObjFlat(msnexp_filled)
-msdata <- RaMS::grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity=0)
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+peak_data <- makeXcmsObjFlat(xcms_filled)
+msdata <- RaMS::grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity = 0)
 pixel_pca <- pickyPCA(peak_data, msdata$MS1)
-}
 }

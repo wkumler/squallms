@@ -13,21 +13,21 @@ extractChromMetrics(
 }
 \arguments{
 \item{peak_data}{Flat-form XC-MS data with columns for the bounding box of
-a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature 
+a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature
 ID. Must be provided WITHOUT retention time correction for proper matching
 to the values in the raw data.}
 
 \item{recalc_betas}{Scalar boolean controlling whether existing beta values
 (as calculated in the XCMS object when peakpicked with \code{CentWaveParam(verboseBetaColumns=TRUE))}
-should be used as-is (the default) or recalculated. See 
-\url{https://github.com/sneumann/xcms/pull/685} for differences in these 
+should be used as-is (the default) or recalculated. See
+\url{https://github.com/sneumann/xcms/pull/685} for differences in these
 implementations.}
 
 \item{ms1_data}{Optional data.table object produced by RaMS containing MS1
 data with columns for filename, rt, mz, and int. If not provided, the files
 are detected from the filepath column in peak_data.}
 
-\item{verbosity}{Scalar value between zero and two determining how much 
+\item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
 }
@@ -48,28 +48,28 @@ the best-fitting bell is subtracted from the raw data). Additionally,
 the function interpolates the raw data to fixed retention time intervals
 and performs a principal components analysis (PCA) across a file-by-RT matrix
 which typically extracts good-looking peaks in the first component (PC1).
-These functions are calculated on the raw MS data as obtained via 
+These functions are calculated on the raw MS data as obtained via
 \pkg{RaMS}, so either the filepaths must be included in the peak_data object
 or supplied as ms1_data.
 }
 \examples{
-\dontrun{
 library(xcms)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files \%>\%
-  readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-  findChromPeaks(cwp) \%>\%
-  adjustRtime(obp) \%>\%
-  groupChromPeaks(pdp) \%>\%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
-peak_data <- makeXcmsObjFlat(msnexp_filled)
+    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
+    findChromPeaks(cwp) \%>\%
+    adjustRtime(obp) \%>\%
+    groupChromPeaks(pdp) \%>\%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
+peak_data <- makeXcmsObjFlat(xcms_filled)
 feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE)
-}
 }
