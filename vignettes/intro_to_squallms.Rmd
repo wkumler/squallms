@@ -91,7 +91,7 @@ We also can operate over only a *subset* of the data, which is quite useful for 
 ```{r pooled_files_only, eval=FALSE}
 ## Not run:
 feat_peak_info <- feat_peak_info %>%
-    filter(str_detect(filename, "AB|CD"))
+    filter(grepl("AB|CD", filename))
 ```
 
 Note, however, that the **retention time bounds must be uncorrected**. `makeXcmsObjFlat` does this automatically for XCMS objects, but if corrected retention times are provided then the data extracted from the mz(X)ML files will be incorrect.
