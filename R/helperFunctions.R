@@ -12,6 +12,8 @@ scale_zero_one <- function(x) (x - min(x)) / (max(x) - min(x))
 #' should include retention time correction and peak correspondence and filling
 #' @param revert_rts Scalar boolean controlling whether the adjusted retention
 #' times found in the XCMS object are propagated or returned as-is
+#' @param verbosity Scalar numberic. Will report XCMS info if greater than zero
+#' or run silently if not (the default).
 #'
 #' @return A data.frame with columns for feature information (from
 #' featureDefinitions: feature, feat_mzmed, feat_rtmed, feat_npeaks, and

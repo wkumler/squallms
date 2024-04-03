@@ -12,6 +12,9 @@ should include retention time correction and peak correspondence and filling}
 
 \item{revert_rts}{Scalar boolean controlling whether the adjusted retention
 times found in the XCMS object are propagated or returned as-is}
+
+\item{verbosity}{Scalar numberic. Will report XCMS info if greater than zero
+or run silently if not (the default).}
 }
 \value{
 A data.frame with columns for feature information (from
