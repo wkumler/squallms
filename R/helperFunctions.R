@@ -247,7 +247,8 @@ utils::globalVariables(c('PC1', 'PC2', 'adj_rt', 'agg_int_avg', 'agg_int_iqr',
                        'med_cor', 'med_snr', 'mtemp', 'mzmax', 'mzmed', 'mzmin', 
                        'npeaks', 'peak_mz', 'peak_rt', 'peakidx', 'pred', 
                        'pred_class', 'pred_prob', 'raw_rt', 'rtemp', 'rtmax', 
-                       'rtmed', 'rtmin', 'x', 'y', '.data'))
+                       'rtmed', 'rtmin', 'x', 'y', '.data', 'ppm_window_width',
+                       'rt_window_width'))
 
 # Import area ----
 

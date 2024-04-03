@@ -8,8 +8,6 @@ extractChromMetrics(
   peak_data,
   recalc_betas = FALSE,
   ms1_data = NULL,
-  rt_window_width = NULL,
-  ppm_window_width = NULL,
   verbosity = 0
 )
 }
