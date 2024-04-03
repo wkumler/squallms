@@ -218,7 +218,7 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
   })
   kmeaned_df <- reactive({
     input$kmeans_click
-    sel_kmeans <- as.data.frame(pcaoutput$rotation[,1:input$n_kmeans_dims])
+    sel_kmeans <- as.data.frame(pcaoutput$rotation[,seq_len(input$n_kmeans_dims)])
     sel_kmeans %>% 
       mutate(cluster=factor(kmeans(sel_kmeans, centers=input$n_kmeans_groups)$cluster)) %>%
       rownames_to_column("feature")

@@ -229,10 +229,10 @@ updateXcmsObjFeats <- function(xcms_obj, feature_metrics, feature_labels,
   # )
   # ph <- xcms:::ProcessHistory(date. = date(),
   #                             type. = "Blah",
-  #                             fileIndex = 1:length(fileNames(xcms_filled)))
+  #                             fileIndex = seq_along(fileNames(xcms_filled)))
   # xph <- xcms:::XProcessHistory(param = NULL, date. = date(), 
   #                              type. = "Unknown", 
-  #                              fileIndex = 1:length(fileNames(xcms_filled)), 
+  #                              fileIndex = seq_along(fileNames(xcms_filled)), 
   #                              msLevel = 1)
   # xcms:::addProcessHistory(xcms_filled, ph) %>%
   #   processHistory()
