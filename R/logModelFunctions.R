@@ -60,7 +60,7 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
         glm(formula = log_formula, family = binomial)
     if (verbosity > 0) {
         message("Logistic model regression coefficients:")
-        message(glmodel$coefficients)
+        show(glmodel$coefficients)
     }
 
     if (verbosity > 1) {
