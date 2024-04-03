@@ -58,7 +58,7 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
     glm(formula=log_formula, family = binomial)
   if(verbosity>0){
     message("Logistic model regression coefficients:")
-    print(glmodel$coefficients)
+    message(glmodel$coefficients)
   }
   
   if(verbosity>1){
@@ -73,7 +73,7 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
       theme_bw() +
       labs(x="Peak shape coefficient", y="Signal-to-noise ratio", shape="Lasso class",
            color="Predicted\nclass")
-    print(gp)
+    show(gp)
   }
   
   preds <- predict(glmodel, newdata=model_df, type = "response")
@@ -136,7 +136,7 @@ logModelFeatQuality <- function(feature_metrics, feature_labels,
     mutate(pred_class=ifelse(pred_prob>likelihood_threshold, "Good", "Bad"))
   
   if(verbosity>0){
-    print(caret::confusionMatrix(factor(pred_df$pred_class), factor(pred_df$feat_class),
+    show(caret::confusionMatrix(factor(pred_df$pred_class), factor(pred_df$feat_class),
                                  positive="Good"))
   }
   

@@ -251,7 +251,7 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
       theme_bw() +
       theme(legend.position = "none") +
       labs(x="Normalized retention time", y="Normalized intensity")
-    print(gp)
+    show(gp)
   })
   output$live_peak <- renderPlot({
     ed_hover <- event_data(source = "plotlypca", event = c("plotly_hover"))
