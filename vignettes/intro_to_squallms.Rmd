@@ -298,6 +298,10 @@ final_xcms <- updateXcmsObjFeats(shape_metrics, class_labels, verbosity = 0,
 
 The final XCMS object can then be passed to downstream software with confidence!
 
-----
+# Vignette diagnostics
+
+```{r}
+sessionInfo()
+```
 
 Vignette last built on `r Sys.Date()`
