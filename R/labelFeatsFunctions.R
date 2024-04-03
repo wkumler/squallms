@@ -210,9 +210,9 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
     barplot(head(perc_exp*100, 10), 
             ylab = "% variance explained", names.arg = paste0("PC", 1:10))
     exp_thresholds <- c(0.2, 0.5, 0.8)
-    PCs_to_explain_perc <- sapply(exp_thresholds, function(exp_threshold){
+    PCs_to_explain_perc <- vapply(exp_thresholds, function(exp_threshold){
       which(cumsum(perc_exp)>exp_threshold)[1]
-    })
+    }, numeric(1))
     legend_text <- paste(paste0(exp_thresholds*100, "%: "), PCs_to_explain_perc, "PCs")
     legend("topright", legend = legend_text, bty='n', bg="transparent")
   })

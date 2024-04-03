@@ -66,9 +66,9 @@ qscoreCalculator <- function(rt, int, na.rm=TRUE){
   # Create a couple different skews and test fit
   maybe_skews <- c(2.5,3,4,5) #Add 7 to catch more multipeaks and more noise
   #Add 2 to catch very slopey peaks and more noise
-  best_skew <- maybe_skews[which.max(sapply(maybe_skews, function(x){
+  best_skew <- maybe_skews[which.max(vapply(maybe_skews, function(x){
     cor(dbeta(scaled_rts, shape1 = x, shape2 = 5), int)
-  }))]
+  }, numeric(1)))]
   perf_peak <- dbeta(scaled_rts, shape1 = best_skew, shape2 = 5)
   peak_cor <- cor(perf_peak, int)
   
