@@ -193,11 +193,11 @@ classyfeatUI <- function() {
                 h3("Group peakpicker"),
                 h4("Settings"),
                 numericInput("n_kmeans_groups",
-                    label = "Number of k-means groups",
+                    label = "Number of k-means groups (max=10)",
                     value = 4, min = 1, max = 10, step = 1
                 ),
                 numericInput("n_kmeans_dims",
-                    label = "Number of PCs to use for k-means",
+                    label = "Number of PCs to use for k-means (max=10)",
                     value = 3, min = 1, max = 10, step = 1
                 ),
                 actionButton("kmeans_click", label = "Rerun k-means"),
@@ -245,9 +245,9 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
     })
     kmeaned_df <- reactive({
         input$kmeans_click
-        sel_kmeans <- as.data.frame(pcaoutput$rotation[, seq_len(input$n_kmeans_dims)])
+        sel_kmeans <- as.data.frame(pcaoutput$rotation[, seq_len(min(input$n_kmeans_dims, 10))])
         sel_kmeans %>%
-            mutate(cluster = factor(kmeans(sel_kmeans, centers = input$n_kmeans_groups)$cluster)) %>%
+            mutate(cluster = factor(kmeans(sel_kmeans, centers = min(input$n_kmeans_groups, 10))$cluster)) %>%
             rownames_to_column("feature")
     })
     output$plotlypca <- renderPlotly({
