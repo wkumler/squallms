@@ -11,9 +11,9 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  crop = NULL
+    collapse = TRUE,
+    comment = "#>",
+    crop = NULL
 )
 ```
 
@@ -43,27 +43,29 @@ For this demo, I'll be performing peakpicking with XCMS but it's worth noting th
 
 ```{r run_xcms, message=FALSE}
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(tidyr)
-  library(tibble)
-  library(ggplot2)
-  library(xcms)
-  library(RaMS)
+    library(dplyr)
+    library(tidyr)
+    library(tibble)
+    library(ggplot2)
+    library(xcms)
+    library(RaMS)
 })
 mzML_files <- system.file("extdata", package = "RaMS") %>%
-  list.files(full.names=TRUE, pattern="[A-F].mzML")
+    list.files(full.names = TRUE, pattern = "[A-F].mzML")
 
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
 obp <- ObiwarpParam(binSize = 0.1, response = 1, distFun = "cor_opt")
-pdp <- PeakDensityParam(sampleGroups = 1:3, bw = 12, minFraction = 0, 
-                        binSize = 0.001, minSamples = 0)
+pdp <- PeakDensityParam(
+    sampleGroups = 1:3, bw = 12, minFraction = 0,
+    binSize = 0.001, minSamples = 0
+)
 xcms_filled <- mzML_files %>%
-  readMSData(msLevel. = 1, mode = "onDisk") %>%
-  findChromPeaks(cwp) %>%
-  adjustRtime(obp) %>%
-  groupChromPeaks(pdp) %>%
-  fillChromPeaks(FillChromPeaksParam(ppm = 5))
+    readMSData(msLevel. = 1, mode = "onDisk") %>%
+    findChromPeaks(cwp) %>%
+    adjustRtime(obp) %>%
+    groupChromPeaks(pdp) %>%
+    fillChromPeaks(FillChromPeaksParam(ppm = 5))
 ```
 
 ```{r save_xcms_obj, eval=FALSE, echo=FALSE}
@@ -74,12 +76,12 @@ xcms_filled <- mzML_files %>%
 This XCMS object is useful for documenting processing steps and interfacing with R-based pipelines but can be challenging to inspect and interact with. `squallms` provides a function that turns this S4 object into a flat file containing the feature and peak information.
 
 ```{r makeXcmsObjFlat}
-feat_peak_info <- makeXcmsObjFlat(xcms_filled) %>% 
-  select(feature, starts_with("mz"), starts_with("rt"), filename, filepath)
-feat_peak_info %>% 
-  mutate(filepath=paste0(substr(filepath, 1, 13), "~")) %>%
-  head() %>%
-  knitr::kable()
+feat_peak_info <- makeXcmsObjFlat(xcms_filled) %>%
+    select(feature, starts_with("mz"), starts_with("rt"), filename, filepath)
+feat_peak_info %>%
+    mutate(filepath = paste0(substr(filepath, 1, 13), "~")) %>%
+    head() %>%
+    knitr::kable()
 ```
 
 Although comprehensive, the only information needed is actually the grouping info, the peak bounding boxes, and the filepath (feature, mz\*, rt\*, and filepath) because we'll recalculate the necessary metrics from the raw peak data pulled in from the mz(X)ML files. Similarly, other peakpicking algorithms tend to produce data in a similar format and can interface with `squallms` here.
@@ -89,7 +91,7 @@ We also can operate over only a *subset* of the data, which is quite useful for 
 ```{r pooled_files_only, eval=FALSE}
 ## Not run:
 feat_peak_info <- feat_peak_info %>%
-  filter(str_detect(filename, "AB|CD"))
+    filter(str_detect(filename, "AB|CD"))
 ```
 
 Note, however, that the **retention time bounds must be uncorrected**. `makeXcmsObjFlat` does this automatically for XCMS objects, but if corrected retention times are provided then the data extracted from the mz(X)ML files will be incorrect.
@@ -103,10 +105,10 @@ msdata <- grabMSdata(unique(feat_peak_info$filepath), verbosity = 0)
 shape_metrics <- extractChromMetrics(feat_peak_info, ms1_data = msdata$MS1)
 knitr::kable(head(shape_metrics))
 shape_metrics %>%
-  arrange(desc(med_snr)) %>%
-  ggplot() +
-  geom_point(aes(x=med_rt, y=med_mz, color=med_cor, size=med_snr), alpha=0.5) +
-  theme_bw()
+    arrange(desc(med_snr)) %>%
+    ggplot() +
+    geom_point(aes(x = med_rt, y = med_mz, color = med_cor, size = med_snr), alpha = 0.5) +
+    theme_bw()
 ```
 
 So far so good. Unfortunately, many of these features are very low-quality, often a result of noise rather than biological signal, and should not be included in the downstream analysis.
@@ -114,16 +116,18 @@ So far so good. Unfortunately, many of these features are very low-quality, ofte
 ```{r plotrandompeaks}
 set.seed(123)
 shape_metrics %>%
-  slice_sample(n = 8) %>%
-  mutate(mzmin=med_mz-med_mz*5/1e6) %>%
-  mutate(mzmax=med_mz+med_mz*5/1e6) %>%
-  mutate(rtmin=med_rt-1) %>%
-  mutate(rtmax=med_rt+1) %>%
-  left_join(msdata$MS1, join_by(between(y$rt, x$rtmin, x$rtmax), 
-                                between(y$mz, x$mzmin, x$mzmax))) %>%
-  qplotMS1data() +
-  geom_vline(aes(xintercept=med_rt), color="red") +
-  facet_wrap(~feature, scales = "free", nrow=2)
+    slice_sample(n = 8) %>%
+    mutate(mzmin = med_mz - med_mz * 5 / 1e6) %>%
+    mutate(mzmax = med_mz + med_mz * 5 / 1e6) %>%
+    mutate(rtmin = med_rt - 1) %>%
+    mutate(rtmax = med_rt + 1) %>%
+    left_join(msdata$MS1, join_by(
+        between(y$rt, x$rtmin, x$rtmax),
+        between(y$mz, x$mzmin, x$mzmax)
+    )) %>%
+    qplotMS1data() +
+    geom_vline(aes(xintercept = med_rt), color = "red") +
+    facet_wrap(~feature, scales = "free", nrow = 2)
 ```
 
 
@@ -144,21 +148,21 @@ manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1)
 ```
 
 ```{r load_prior_manual_labels, eval=!interactive(), echo=FALSE}
-manual_classes <- readRDS(system.file("extdata", "intro_manual_labels.rds", package="squallms"))
+manual_classes <- readRDS(system.file("extdata", "intro_manual_labels.rds", package = "squallms"))
 ```
 
 The classification plot looks like this:
 
 ```{r plotManualFeatWindow, echo=FALSE}
 row_data <- feat_peak_info %>%
-  group_by(feature) %>%
-  summarise(mzmed=median(mz), rtmed=median(rt)) %>%
-  filter(feature=="FT001")
+    group_by(feature) %>%
+    summarise(mzmed = median(mz), rtmed = median(rt)) %>%
+    filter(feature == "FT001")
 mzbounds <- pmppm(row_data$mzmed, 10)
-rtbounds <- row_data$rtmed+c(-1, 1)
-eic <- msdata$MS1[mz%between%mzbounds][rt%between%rtbounds] %>% arrange(filename, rt)
+rtbounds <- row_data$rtmed + c(-1, 1)
+eic <- msdata$MS1[mz %between% mzbounds][rt %between% rtbounds] %>% arrange(filename, rt)
 
-plot(eic$rt, eic$int, type="l", yaxt='n', ylab="", xlab="Retention time")
+plot(eic$rt, eic$int, type = "l", yaxt = "n", ylab = "", xlab = "Retention time")
 title(paste(row_data$feature, round(mzbounds[1], 7)))
 ```
 
@@ -170,42 +174,52 @@ However, one of the big strengths of `squallms` is its implementation of a strat
 
 ```{r pca_theory_plots, echo=FALSE}
 pcaoutput <- feat_peak_info %>%
-  filter(feature%in%sprintf("FT%03d", 30:50)) %>%
-  pickyPCA(ms1_data = msdata$MS1, rt_window_width = 1, ppm_window_width = 5, 
-           verbosity = 0)
+    filter(feature %in% sprintf("FT%03d", 30:50)) %>%
+    pickyPCA(
+        ms1_data = msdata$MS1, rt_window_width = 1, ppm_window_width = 5,
+        verbosity = 0
+    )
 
 tile_gp <- pcaoutput$interp_df %>%
-  ggplot() +
-  geom_tile(aes(x=approx_rt, y=filename, fill=approx_int)) +
-  facet_wrap(~feature, nrow=4) +
-  scale_x_continuous(breaks = c(1, 25, 50), labels = c("0", "0.5", "1"),
-                     expand = expansion()) +
-  scale_y_discrete(expand = expansion()) +
-  theme(axis.text=element_blank(), axis.ticks = element_blank(),
-        legend.position = "none") +
-  labs(x="Scaled retention time", y="Individual files")
-if(interactive()){
-  ggsave(plot = tile_gp, filename = "intro_tile_gp.png", width = 6, height=3, 
-       units = "in", path = "vignettes", device = "png", dpi=120)
+    ggplot() +
+    geom_tile(aes(x = approx_rt, y = filename, fill = approx_int)) +
+    facet_wrap(~feature, nrow = 4) +
+    scale_x_continuous(
+        breaks = c(1, 25, 50), labels = c("0", "0.5", "1"),
+        expand = expansion()
+    ) +
+    scale_y_discrete(expand = expansion()) +
+    theme(
+        axis.text = element_blank(), axis.ticks = element_blank(),
+        legend.position = "none"
+    ) +
+    labs(x = "Scaled retention time", y = "Individual files")
+if (interactive()) {
+    ggsave(
+        plot = tile_gp, filename = "intro_tile_gp.png", width = 6, height = 3,
+        units = "in", path = "vignettes", device = "png", dpi = 120
+    )
 }
 
 pca_gp <- pcaoutput$pcamat %>%
-  prcomp() %>%
-  .$rotation %>%
-  .[,1:2] %>%
-  as.data.frame() %>%
-  rownames_to_column("feature") %>%
-  ggplot(aes(x=PC1, y=PC2, label=feature, key=feature)) +
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  geom_text() +
-  coord_fixed() +
-  scale_x_continuous(expand = expansion(0.2)) +
-  labs(x="Principal component 1", y="Principal component 2") +
-  theme_bw()
-if(interactive()){
-  ggsave(plot = pca_gp, filename = "intro_pca_gp.png", width = 3, height=4, 
-       units = "in", path = "vignettes", device = "png", dpi=120)
+    prcomp() %>%
+    .$rotation %>%
+    .[, 1:2] %>%
+    as.data.frame() %>%
+    rownames_to_column("feature") %>%
+    ggplot(aes(x = PC1, y = PC2, label = feature, key = feature)) +
+    geom_vline(xintercept = 0) +
+    geom_hline(yintercept = 0) +
+    geom_text() +
+    coord_fixed() +
+    scale_x_continuous(expand = expansion(0.2)) +
+    labs(x = "Principal component 1", y = "Principal component 2") +
+    theme_bw()
+if (interactive()) {
+    ggsave(
+        plot = pca_gp, filename = "intro_pca_gp.png", width = 3, height = 4,
+        units = "in", path = "vignettes", device = "png", dpi = 120
+    )
 }
 ```
 
@@ -228,7 +242,7 @@ lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 ```
 
 ```{r load_prior_lasso_labels, eval=!interactive(), echo=FALSE}
-lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package="squallms"))
+lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
 ```
 
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
@@ -255,12 +269,12 @@ manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1, select
 
 ```{r caret_confusion}
 suppressPackageStartupMessages(library(caret))
-data.frame(manual=manual_classes, lasso=lasso_classes) %>%
-  filter(!is.na(manual) & !is.na(lasso))
+data.frame(manual = manual_classes, lasso = lasso_classes) %>%
+    filter(!is.na(manual) & !is.na(lasso))
 
-data.frame(manual=factor(manual_classes), lasso=factor(lasso_classes)) %>%
-  filter(!is.na(manual)) %>%
-  with(confusionMatrix(lasso, manual, positive="Good"))
+data.frame(manual = factor(manual_classes), lasso = factor(lasso_classes)) %>%
+    filter(!is.na(manual)) %>%
+    with(confusionMatrix(lasso, manual, positive = "Good"))
 ```
 
 If there are differences between the two, we can replace the lasso labels with the (generally) more reliable manual labels.
@@ -276,9 +290,11 @@ Of course, both labeling methods are designed to return partially-labeled datase
 
 ```{r logModelFeatProb, warning=FALSE}
 pred_probs <- logModelFeatProb(shape_metrics, class_labels)
-if(interactive()){
-  ggsave("intro_model_spread.png", plot = last_plot(), device = "png",
-       path = "vignettes", width = 6, height = 4, units = "in", dpi=120)
+if (interactive()) {
+    ggsave("intro_model_spread.png",
+        plot = last_plot(), device = "png",
+        path = "vignettes", width = 6, height = 4, units = "in", dpi = 120
+    )
 }
 hist(pred_probs, breaks = 20, main = NULL, xlab = "Logistic likelihood")
 ```
@@ -292,8 +308,10 @@ pred_classes <- logModelFeatQuality(shape_metrics, class_labels, verbosity = 1)
 Finally, once an appropriate threshold has been set and the model's performance is acceptable the XCMS object itself can be edited to remove the poor-quality peaks. This function also notes `squallms` in the object's processing history (albeit poorly).
 
 ```{r, eval=FALSE}
-final_xcms <- updateXcmsObjFeats(shape_metrics, class_labels, verbosity = 0, 
-                                 likelihood_threshold = 0.5)
+final_xcms <- updateXcmsObjFeats(shape_metrics, class_labels,
+    verbosity = 0,
+    likelihood_threshold = 0.5
+)
 ```
 
 The final XCMS object can then be passed to downstream software with confidence!
