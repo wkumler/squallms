@@ -163,6 +163,7 @@ rtbounds <- row_data$rtmed + c(-1, 1)
 eic <- msdata$MS1[mz %between% mzbounds][rt %between% rtbounds] %>% arrange(filename, rt)
 
 plot(eic$rt, eic$int, type = "l", yaxt = "n", ylab = "", xlab = "Retention time")
+abline(v = row_data$rtmed, col="red")
 title(paste(row_data$feature, round(mzbounds[1], 7)))
 ```
 
