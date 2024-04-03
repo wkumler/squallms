@@ -12,14 +12,21 @@ labelSingleFeat <- function(row_data, ms1_data) {
     for (j in unique(eic$filename)) {
         lines(eic[eic$filename == j, c("rt", "int")])
     }
+    abline(v=row_data$rtmed, col="red")
     axis(1)
     title(paste(row_data$feature, round(mzbounds[1], 7)))
     keyinput <- getGraphicsEvent(prompt = "", onKeybd = function(x) {
         return(x)
     })
     dev.off()
+    if (length(keyinput)==0){
+        return("Quit")
+    }
     if (keyinput == "ctrl-[") { # aka Esc button ctrl-[
         return("Quit")
+    }
+    if( keyinput == "ctrl-H") { # aka Backspace button
+        return("Backspace")
     }
     if (!keyinput %in% c("Right", "Left", "Up")) {
         return("Other")
@@ -118,6 +125,8 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
 
     feat_class_vec <- rep(NA, nrow(feat_data))
 
+    prev_feat_idx <- numeric()
+    backspace_triggered <- FALSE
     while (TRUE) {
         if (selection == "Unlabeled") {
             feature_subset <- which(is.na(feat_class_vec))
@@ -130,18 +139,27 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
             message("Nothing to label!")
             break
         }
-        chosen_feat_idx <- sample(feature_subset, 1)
+        if (backspace_triggered) {
+            chosen_feat_idx <- prev_feat_idx
+        } else {
+            chosen_feat_idx <- sample(feature_subset, 1)
+        }
         if (interactive()) {
             feat_label <- labelSingleFeat(feat_data[chosen_feat_idx, ], ms1_data)
             if (feat_label == "Quit") {
                 break
+            } else if (feat_label == "Backspace") {
+                backspace_triggered <- TRUE
             } else if (feat_label == "Other") {
                 init_warn <- getOption("warn")
                 options(warn = 1)
                 warning("Unrecognized input, skipping")
                 options(warn = init_warn)
+                backspace_triggered <- FALSE
             } else {
                 feat_class_vec[chosen_feat_idx] <- feat_label
+                prev_feat_idx <- chosen_feat_idx
+                backspace_triggered <- FALSE
             }
         } else {
             warning("Not running in interactive mode, returning NA")
