@@ -51,7 +51,6 @@ qscoreCalculator <- function(rt, int, na.rm=TRUE){
   #Return the quality score
   return(c(beta_snr=SNR, beta_cor=peak_cor))
 }
-scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
 pickPCAPixels <- function(peak_data, ms1_data, verbosity=1){
   pickyPCAoutput <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)
   interp_df <- pickyPCAoutput$interp_df

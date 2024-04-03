@@ -1,4 +1,6 @@
 
+scale_zero_one <- function(x)(x-min(x))/(max(x)-min(x))
+
 # makeXcmsObjFlat ----
 #' Make an XCMS object flat
 #' 
