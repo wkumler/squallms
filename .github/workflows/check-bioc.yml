@@ -55,7 +55,7 @@ jobs:
           - { os: ubuntu-latest, r: 'release', bioc: '3.18', cont: "bioconductor/bioconductor_docker:RELEASE_3_18", rspm: "https://packagemanager.rstudio.com/cran/__linux__/jammy/latest" }
           - { os: macOS-latest, r: 'release', bioc: '3.18'}
           - { os: windows-latest, r: 'release', bioc: '3.18'}
-          - { os: ubuntu-latest, r: 'devel', bioc: '3.19'}
+          - { os: ubuntu-latest, r: 'devel', bioc:'3.19', http-user-agent: 'release'}
           - { os: macOS-latest, r: 'devel', bioc: '3.19'}
           - { os: windows-latest, r: 'devel', bioc: '3.19'}
           ## Check https://github.com/r-lib/actions/tree/master/examples
