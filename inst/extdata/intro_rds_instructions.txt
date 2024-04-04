@@ -1,0 +1,14 @@
+
+Three files are provided with the squallms package, all generated from the
+introductory vignette (intro_to_squallms.Rmd).
+
+The first object, intro_xcms_filled.rds, is an XCMS object saved for local unit
+tests to avoid reconstructing it every time.
+
+The second object, intro_manual_labels.rds, is the result of using 
+labelFeatsManual interactively to assign quality scores to a small selection of
+features for use in the vignettes.
+
+The third object, intro_lasso_labels.rds, is the result of using 
+labelFeatsLasso interactively to assign quality scores to a small selection of
+features for use in the vignettes.
