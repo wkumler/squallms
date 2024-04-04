@@ -25,6 +25,7 @@
 #' @examples
 #' library(xcms)
 #' library(dplyr)
+#' library(MSnbase)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 #' register(BPPARAM = SerialParam())
@@ -106,6 +107,7 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
 #' @examples
 #' library(xcms)
 #' library(dplyr)
+#' library(MSnbase)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 #' register(BPPARAM = SerialParam())

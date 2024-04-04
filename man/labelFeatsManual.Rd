@@ -59,6 +59,7 @@ the Escape key.
 \examples{
 library(xcms)
 library(dplyr)
+library(MSnbase)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())

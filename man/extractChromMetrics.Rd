@@ -54,6 +54,7 @@ or supplied as ms1_data.
 }
 \examples{
 library(xcms)
+library(MSnbase)
 library(dplyr)
 mzML_files <- system.file("extdata", package = "RaMS") \%>\%
     list.files(full.names = TRUE, pattern = "[A-F].mzML")

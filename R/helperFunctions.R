@@ -26,6 +26,7 @@ scale_zero_one <- function(x) (x - min(x)) / (max(x) - min(x))
 #' @examples
 #' library(xcms)
 #' library(dplyr)
+#' library(MSnbase)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 #' register(BPPARAM = SerialParam())
@@ -146,6 +147,7 @@ backToRawRTs <- function(peak_data, xcms_obj, verbosity = 0) {
 #' @examples
 #' library(xcms)
 #' library(dplyr)
+#' library(MSnbase)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 #' register(BPPARAM = SerialParam())
@@ -241,6 +243,7 @@ pickyPCA <- function(peak_data, ms1_data, rt_window_width = NULL,
 #' @examples
 #' library(xcms)
 #' library(dplyr)
+#' library(MSnbase)
 #' mzML_files <- system.file("extdata", package = "RaMS") %>%
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 #' register(BPPARAM = SerialParam())
@@ -308,7 +311,7 @@ utils::globalVariables(c(
 
 # Need to specify a few of these manually to avoid conflicts
 #' @rawNamespace import(xcms, except = c(span, groups, collect))
-#' @importFrom MSnbase fileNames fromFile
+#' @importFrom MSnbase fileNames fromFile readMSData
 #' @importFrom RaMS grabMSdata pmppm qplotMS1data
 #' @rawNamespace import(dplyr, except = c(between, first, last))
 #' @import tidyr
