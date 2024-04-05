@@ -1,6 +1,6 @@
 # squallms (development version)
 
-# squallms 0.99.2 (Initial release)
+# squallms 0.99.3 (Initial release)
 squallms is currently in its initial release. Core functions introduced are
 
   - extractChromMetrics
