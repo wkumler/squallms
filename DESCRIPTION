@@ -1,7 +1,7 @@
 Package: squallms
 Type: Package
 Title: Speedy quality assurance via lasso labeling for LC-MS data
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: c(
   person(given = "William", family = "Kumler", email = "wkumler@uw.edu",
          role = c("aut", "cre", "cph"), comment=c(ORCID="0000-0002-5022-8009"))
