@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-.Rproj
+squallms.Rproj
 
 demodata/
 */*.mzML
