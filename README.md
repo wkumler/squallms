@@ -4,6 +4,20 @@
 
 `squallms` is a Bioconductor R package that implements a "semi-labeled" approach to untargeted mass spectrometry data. It pulls in raw data from mass-spec files to calculate several metrics that are then used to label MS features in bulk as high or low quality that are then passed to a simple logistic model that produces a fully-labeled dataset suitable for downstream analysis. 
 
+### Step 0: Installation
+
+`squallms` isn't yet on Bioconductor, so the easiest way to install it is directly from Github with the `remotes` package. This section will be updated once it's on Bioconductor properly.
+
+```
+remotes::install_github("https://github.com/wkumler/squallms")
+```
+
+Once installed, `squallms` can be loaded like any other package:
+
+```
+library(squallms)
+```
+
 ### Step 1: Metric extraction
 
 `squallms` obtains peak quality metrics in two ways. First, it compares individual MS features to an idealized bell shape as detailed in Kumler et al. 2023 (figure below) to extract the beta_cor and beta_snr metrics. Second, it constructs a retention time by filename by normalized intensity matrix and performs a PCA to extract the dominant feature signal - typically also a bell curve represented in the first or second principal components. The PCs are used to group together similar features for rapid annotation in Step 2, while the beta_cor and beta_snr metrics are used alongside the labels to construct the logistic model in Step 3 below.
@@ -29,8 +43,12 @@ Distribution of model predictions relative to lasso labels:
 ```
 library(tidyverse)
 library(xcms)
+library(MSnbase)
 library(RaMS)
-library(devtools)
+
+# remotes::install_github("https://github.com/wkumler/squallms")
+library(squallms)
+
 mzML_files <- list.files(system.file("extdata", package = "RaMS"), full.names=TRUE)[c(3,5,6)]
 
 register(BPPARAM = SerialParam(progressbar = TRUE))
