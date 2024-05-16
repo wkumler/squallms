@@ -6,7 +6,7 @@ labelSingleFeat <- function(row_data, ms1_data) {
     if (nrow(eic) < 5) {
         return("Bad")
     }
-    dev.new(width = 6, height = 4)
+    X11(width = 8, height = 6, xpos = 20, ypos = 20)
     plot.new()
     plot.window(xlim = rtbounds, ylim = c(0, max(eic$int)), mar = c(1.1, 0.1, 0.1, 0.1))
     for (j in unique(eic$filename)) {
@@ -38,6 +38,8 @@ labelSingleFeat <- function(row_data, ms1_data) {
     )
     feat_class
 }
+
+
 #' Label chromatographic features manually
 #'
 #' This function provides an interactive interface to a labeling function that
