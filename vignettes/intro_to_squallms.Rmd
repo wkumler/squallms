@@ -256,13 +256,13 @@ lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
 
 ```{r good_ss, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
-knitr::include_graphics("intro_good_ss.png")
+knitr::include_graphics("vignettes/intro_good_ss.png")
 ```
 
 Of course, a training set needs examples of low-quality peaks as well. I then browsed other features in the central plot until finding a region of low-quality features that I could similarly select using the lasso tool and flag as Bad. Multiple regions can be selected and combined with additional lassos, and of course the rectangle selection tool can be used instead of the freehand.
 
 ```{r bad_ss, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
-knitr::include_graphics("intro_bad_ss.png")
+knitr::include_graphics("vignettes/intro_bad_ss.png")
 ```
 
 
