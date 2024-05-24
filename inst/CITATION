@@ -1,0 +1,13 @@
+citHeader("To cite squallms in publications use:")
+
+citEntry(entry="article",
+   author=c(
+        person("William", "Kumler"),
+        person(c("Bryna", "J."), "Hazelton"),
+        person(c("Anitra", "E"), "Ingalls")
+   ),
+   title="Picky with peakpicking: assessing chromatographic peak quality with simple metrics in metabolomics",
+   journal="BMC Bioinformatics",
+   year="2023",
+   volume="24",
+   DOI="10.1186/s12859-023-05533-4")
