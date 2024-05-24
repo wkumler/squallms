@@ -1,6 +1,41 @@
-labelSingleFeat <- function(row_data, ms1_data) {
-    mzbounds <- pmppm(row_data$mzmed, 10)
-    rtbounds <- row_data$rtmed + c(-1, 1)
+#' Label a single chromatographic feature
+#' 
+#' This function is the core operation of the labelFeatsManual function. 
+#' The plot appears in a new window and is set up to detect key presses which
+#' have been bound to specific classifications. Currently, the left arrow key
+#' categorizes the feature as "Bad" while the right arrow key categorizes it
+#' as "Good". Up and down arrows can be bound to additional classifications if
+#' desired by editing the code, though a future update may provide more control.
+#'
+#' @param feature_data_i Information associated with a single chromatographic
+#' feature, most importantly its central *m/z* value (mzmed) and retention time 
+#' in minutes (rtmed).
+#' @param ms1_data A data.table containing mz, rt, and int columns containing
+#' the MS1 data from which the feature's chromatogram should be extracted.
+#' @param ppm The parts-per-million window of the extracted ion chromatogram
+#' @param rt_window_width The width of the retention time window for the extracted
+#' ion chromatogram, in minutes.
+#'
+#' @return A scalar character corresponding to either "Quit", "Backspace",
+#' "Good", "Bad", or "Revisit", depending on what key is pressed while the plot
+#' window is active.
+#' @export
+#'
+#' @examples
+#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
+#' msdata <- grabMSdata(mzML_files, verbosity=0)
+#' 
+#' if(interactive()){
+#'     labelSingleFeat(data.frame(mzmed=118.0865, rtmed=7.8), ms1_data=msdata$MS1)
+#' }
+#' 
+#' # Returns "Bad" if the extracted ion chromatogram has fewer than 5 scans
+#' labelSingleFeat(data.frame(mzmed=50.000, rtmed=5), ms1_data=msdata$MS1,
+#'                 ppm_window_width=1, rt_window_width = 10)
+labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_window_width=2) {
+    mzbounds <- pmppm(feature_data_i$mzmed, ppm_window_width)
+    rtbounds <- feature_data_i$rtmed + c(-1, 1)*rt_window_width/2
     eic <- ms1_data[mz %between% mzbounds][rt %between% rtbounds] %>%
         arrange(rt)
     if (nrow(eic) < 5) {
@@ -12,9 +47,9 @@ labelSingleFeat <- function(row_data, ms1_data) {
     for (j in unique(eic$filename)) {
         lines(eic[eic$filename == j, c("rt", "int")])
     }
-    abline(v=row_data$rtmed, col="red")
+    abline(v=feature_data_i$rtmed, col="red")
     axis(1)
-    title(paste(row_data$feature, round(mzbounds[1], 7)))
+    title(paste(feature_data_i$feature, round(mzbounds[1], 7)))
     keyinput <- getGraphicsEvent(prompt = "", onKeybd = function(x) {
         return(x)
     })
@@ -71,6 +106,9 @@ labelSingleFeat <- function(row_data, ms1_data) {
 #' "Labeled", the classifier will target (and overwrite) existing labels.
 #' Otherwise, the classifier will randomly target any feature whether previously
 #' classified or not.
+#' @param ppm The parts-per-million window of the extracted ion chromatogram
+#' @param rt_width The width of the retention time window for the extracted
+#' ion chromatogram, in minutes.
 #' @param verbosity Scalar value between zero and two determining how much
 #' diagnostic information is produced. Zero should return nothing, one should
 #' return text-based progress markers, and 2 will return diagnostic plots.

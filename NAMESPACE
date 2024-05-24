@@ -3,6 +3,7 @@
 export(extractChromMetrics)
 export(labelFeatsLasso)
 export(labelFeatsManual)
+export(labelSingleFeat)
 export(logModelFeatProb)
 export(logModelFeatQuality)
 export(makeXcmsObjFlat)
