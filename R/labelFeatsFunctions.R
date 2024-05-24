@@ -12,7 +12,7 @@
 #' in minutes (rtmed).
 #' @param ms1_data A data.table containing mz, rt, and int columns containing
 #' the MS1 data from which the feature's chromatogram should be extracted.
-#' @param ppm The parts-per-million window of the extracted ion chromatogram
+#' @param ppm_window_width The parts-per-million window of the extracted ion chromatogram
 #' @param rt_window_width The width of the retention time window for the extracted
 #' ion chromatogram, in minutes.
 #'
@@ -22,7 +22,8 @@
 #' @export
 #'
 #' @examples
-#' mzML_files <- system.file("extdata", package = "RaMS") %>%
+#' library(RaMS)
+#' mzML_files <- system.file("extdata", package = "RaMS") |>
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 #' msdata <- grabMSdata(mzML_files, verbosity=0)
 #' 
@@ -41,7 +42,7 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_wi
     if (nrow(eic) < 5) {
         return("Bad")
     }
-    X11(width = 8, height = 6, xpos = 20, ypos = 20)
+    dev.new(width = 8, height = 6, xpos = 20, ypos = 20)
     plot.new()
     plot.window(xlim = rtbounds, ylim = c(0, max(eic$int)), mar = c(1.1, 0.1, 0.1, 0.1))
     for (j in unique(eic$filename)) {
