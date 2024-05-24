@@ -25,6 +25,7 @@ Depends:
 Imports:
     xcms,
     MSnbase,
+    MsExperiment,
     RaMS,
     dplyr,
     tidyr,
