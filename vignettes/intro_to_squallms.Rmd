@@ -115,10 +115,14 @@ Note, however, that the **retention time bounds must be uncorrected**. `makeXcms
 
 The first step is to obtain some kind of information about the chromatographic features that will allow us to distinguish between good and bad. The most intuitive metrics (in my opinion) are similarity to a bell curve and the signal-to-noise ratio. Although many implementations of these exist, the ones I've found most useful are described in [Kumler et al. (2023)](https://doi.org/10.1186/s12859-023-05533-4). The function for this in `squallms` is `extractChromMetrics`, as shown below. I read in the raw MS data with RaMS first because this saves a step and can be reused for quality checks.
 
-```{r extractChromMetrics, warning=FALSE, fig.cap="Mass by time diagram of all features returned by XCMS. Points have been colored by their calculated peak shape metric and are sized by their calculated signal-to-noise ratio. Large, pale points tend to be higher quality than small dark ones."}
+```{r extractChromMetrics, warning=FALSE}
 msdata <- grabMSdata(unique(feat_peak_info$filepath), verbosity = 0)
 shape_metrics <- extractChromMetrics(feat_peak_info, ms1_data = msdata$MS1)
-knitr::kable(head(shape_metrics))
+knitr::kable(head(shape_metrics), caption = "Format of the output from extractChromMetrics")
+```
+
+
+```{r plot metrics, warning=FALSE, fig.cap="Mass by time diagram of all features returned by XCMS. Points have been colored by their calculated peak shape metric and are sized by their calculated signal-to-noise ratio. Large, pale points tend to be higher quality than small dark ones."}
 shape_metrics %>%
     arrange(desc(med_snr)) %>%
     ggplot() +
@@ -211,7 +215,7 @@ pcaoutput <- feat_peak_info %>%
 
 The similarity between high-quality peaks can be seen visually in the figure below. Good peaks have a distinctly lighter center and darker sides corresponding to high values at the center of the peak and low values at the edges of the window. The pattern's visible across multiple files as a ridge running vertically down each feature's small multiple plot. In this case, features FT030, FT040, FT041, and FT044 look like high-quality features. Noise features have no obvious pattern, so the PCA won't be able to extract signal from them as a dominant component. The other pattern are the features (FT031, FT042, FT048) that are intense at the beginning or at the end, corresponding to the noise peaks that CentWave loves picking out so much.
 
-```{r pixel matrix ggplot, fig.cap="File by time views of extracted ion chromatograms for a subset of features shown as a pixel matrix. Colors correspond to the relative intensity of the chromatogram across the gridded retention time axis, with good features consistently showing up as a bright streak down the center of the plot, while noise features look like static. XCMS feature IDs are shown in the facet labels."}
+```{r pixelmatrixggplot, fig.cap="File by time views of extracted ion chromatograms for a subset of features shown as a pixel matrix. Colors correspond to the relative intensity of the chromatogram across the gridded retention time axis, with good features consistently showing up as a bright streak down the center of the plot, while noise features look like static. XCMS feature IDs are shown in the facet labels."}
 pcaoutput$interp_df %>%
     ggplot() +
     geom_tile(aes(x = approx_rt, y = filename, fill = approx_int)) +
@@ -230,7 +234,7 @@ pcaoutput$interp_df %>%
 
 When the PCA is performed, we then see these features separated from the rest along the first principal component, with features FT030, FT040, FT041, and FT044 all stacking almost on top of each other at the far right side of the principal component plot.
 
-```{r principal component plot, fig.cap="Principal component analysis of the pixel matrix features. Each 'pixel' in the previous plot was a dimension along which the PCA detected redundancy, allowing for a majority of the variance to be explained by the first axis in which good features separate from bad ones."}
+```{r principalcomponentplot, fig.cap="Principal component analysis of the pixel matrix features. Each 'pixel' in the previous plot was a dimension along which the PCA detected redundancy, allowing for a majority of the variance to be explained by the first axis in which good features separate from bad ones."}
 pcaoutput$pcamat %>%
     prcomp() %>%
     .$rotation %>%
@@ -255,14 +259,14 @@ lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
 
-```{r good_ss, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
-knitr::include_graphics("vignettes/intro_good_ss.png")
+```{r goodss, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
+knitr::include_graphics(file.path(here::here(),"vignettes","intro_good_ss.png"), rel_path = FALSE)
 ```
 
 Of course, a training set needs examples of low-quality peaks as well. I then browsed other features in the central plot until finding a region of low-quality features that I could similarly select using the lasso tool and flag as Bad. Multiple regions can be selected and combined with additional lassos, and of course the rectangle selection tool can be used instead of the freehand.
 
-```{r bad_ss, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
-knitr::include_graphics("vignettes/intro_bad_ss.png")
+```{r badss, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
+knitr::include_graphics(file.path(here::here(),"vignettes","intro_bad_ss.png"), rel_path = FALSE)
 ```
 
 
