@@ -97,7 +97,7 @@ feat_peak_info <- makeXcmsObjFlat(xcms_filled) %>%
 feat_peak_info %>%
     head() %>%
     mutate(filepath = paste0(substr(filepath, 1, 13), "~")) %>%
-    knitr::kable()
+    knitr::kable(caption = "Output from makeXcmsObjFlat.")
 ```
 
 Although comprehensive, the only information needed is actually the grouping info, the peak bounding boxes, and the filepath (feature, mz\*, rt\*, and filepath) because we'll recalculate the necessary metrics from the raw peak data pulled in from the mz(X)ML files. Similarly, other peakpicking algorithms tend to produce data in a similar format and can interface with `squallms` here.
@@ -115,7 +115,7 @@ Note, however, that the **retention time bounds must be uncorrected**. `makeXcms
 
 The first step is to obtain some kind of information about the chromatographic features that will allow us to distinguish between good and bad. The most intuitive metrics (in my opinion) are similarity to a bell curve and the signal-to-noise ratio. Although many implementations of these exist, the ones I've found most useful are described in [Kumler et al. (2023)](https://doi.org/10.1186/s12859-023-05533-4). The function for this in `squallms` is `extractChromMetrics`, as shown below. I read in the raw MS data with RaMS first because this saves a step and can be reused for quality checks.
 
-```{r extractChromMetrics, warning=FALSE}
+```{r extractChromMetrics, warning=FALSE, fig.cap="Mass by time diagram of all features returned by XCMS. Points have been colored by their calculated peak shape metric and are sized by their calculated signal-to-noise ratio. Large, pale points tend to be higher quality than small dark ones."}
 msdata <- grabMSdata(unique(feat_peak_info$filepath), verbosity = 0)
 shape_metrics <- extractChromMetrics(feat_peak_info, ms1_data = msdata$MS1)
 knitr::kable(head(shape_metrics))
@@ -128,7 +128,7 @@ shape_metrics %>%
 
 The output from `extractChromMetrics` is a data frame with peak shape (med_cor) and signal-to-noise (med_snr) calculations as estimated for each feature in the dataset. Unfortunately, many of these features are very low-quality, often a result of noise rather than biological signal, and should not be included in the downstream analysis. We view a random subset of the features that XCMS produced in the below code chunk:
 
-```{r plotrandompeaks}
+```{r plotrandompeaks, fig.cap="Eight randomly selected features from the XCMS object shown as extracted ion chromatograms. Colors correspond to the med_cor metric and the med_snr value is shown as a label in the upper right. As shown above, high-quality peaks tend to be pale and have large SNR values but several features show very poor quality."}
 # Set seed for reproducibility, ensuring that slice_sample always returns the
 # same features for discussion below.
 set.seed(123)
@@ -151,7 +151,7 @@ some_random_feats %>%
     facet_wrap(~feature, scales = "free", nrow = 3) +
     scale_color_continuous(limits=c(0, 1), name="Peak shape metric") +
     scale_y_continuous(expand = expansion(c(0, 0.25))) +
-    theme(legend.position=c(0.82, 0.12)) +
+    theme(legend.position.inside=c(0.82, 0.12), legend.position = "inside") +
     guides(color=guide_colorbar(direction = "horizontal", title.position="top"))
 ```
 
@@ -173,7 +173,7 @@ manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1)
 
 The plot that's shown for each feature looks like the one below, with the feature ID and median *m/z* value shown in the title while the typical chromatogram is produced as a line plot of intensity plotted against retention time.
 
-```{r plotManualFeatWindow}
+```{r plotManualFeatWindow, fig.cap="Extracted ion chromatogram of the first feature in the dataset as would be seen via labelFeatsManual."}
 row_data <- feat_peak_info %>%
     group_by(feature) %>%
     summarise(mzmed = median(mz), rtmed = median(rt)) %>%
@@ -211,7 +211,7 @@ pcaoutput <- feat_peak_info %>%
 
 The similarity between high-quality peaks can be seen visually in the figure below. Good peaks have a distinctly lighter center and darker sides corresponding to high values at the center of the peak and low values at the edges of the window. The pattern's visible across multiple files as a ridge running vertically down each feature's small multiple plot. In this case, features FT030, FT040, FT041, and FT044 look like high-quality features. Noise features have no obvious pattern, so the PCA won't be able to extract signal from them as a dominant component. The other pattern are the features (FT031, FT042, FT048) that are intense at the beginning or at the end, corresponding to the noise peaks that CentWave loves picking out so much.
 
-```{r pixel matrix ggplot}
+```{r pixel matrix ggplot, fig.cap="File by time views of extracted ion chromatograms for a subset of features shown as a pixel matrix. Colors correspond to the relative intensity of the chromatogram across the gridded retention time axis, with good features consistently showing up as a bright streak down the center of the plot, while noise features look like static. XCMS feature IDs are shown in the facet labels."}
 pcaoutput$interp_df %>%
     ggplot() +
     geom_tile(aes(x = approx_rt, y = filename, fill = approx_int)) +
@@ -230,7 +230,7 @@ pcaoutput$interp_df %>%
 
 When the PCA is performed, we then see these features separated from the rest along the first principal component, with features FT030, FT040, FT041, and FT044 all stacking almost on top of each other at the far right side of the principal component plot.
 
-```{r principal component plot}
+```{r principal component plot, fig.cap="Principal component analysis of the pixel matrix features. Each 'pixel' in the previous plot was a dimension along which the PCA detected redundancy, allowing for a majority of the variance to be explained by the first axis in which good features separate from bad ones."}
 pcaoutput$pcamat %>%
     prcomp() %>%
     .$rotation %>%
@@ -255,11 +255,16 @@ lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
 
-![](intro_good_ss.png)
+```{r good_ss, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
+knitr::include_graphics("intro_good_ss.png")
+```
 
 Of course, a training set needs examples of low-quality peaks as well. I then browsed other features in the central plot until finding a region of low-quality features that I could similarly select using the lasso tool and flag as Bad. Multiple regions can be selected and combined with additional lassos, and of course the rectangle selection tool can be used instead of the freehand.
 
-![](intro_bad_ss.png)
+```{r bad_ss, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
+knitr::include_graphics("intro_bad_ss.png")
+```
+
 
 In this case, the good/bad signal was so strongly dominant that I had no need for additional principal components and really only needed the first one to capture my internal sense of peak quality. However, other datasets may not identify the quality signal as the first or even second PC, especially if there's a large biological signal present. To handle this case, I added a k-means clustering algorithm that operates on all PCs and renders their aggregate shape in the upper right. Combined with plotly's ability to show or hide individual clusters by double-clicking the plot legend, this allows the user to isolate regions in multidimensional space while still only showing the first two PCs in the plot. Both k and the number of PCs used for the k-means clustering can be set in the left sidebar, while a simple barplot provides information about the number of PCs that capture 20, 50, and 80% of the variation in the dataset.
 
@@ -303,7 +308,7 @@ Of course, both labeling methods are designed to return partially-labeled datase
 
 `logModelfeatProb` aligns the feature metrics with the labels and performs the logistic regression, returning a vector of likelihoods for every feature in the dataset, not just those that were previously labeled. These values range from 0 to 1 and estimate the probability that a given feature would be assigned a "Good" classification if manually reviewed, with values close to 1 being very likely to be "Good" and values close to 0 more likely to be low-quality.
 
-```{r logModelFeatProb, warning=FALSE}
+```{r logModelFeatProb, warning=FALSE, fig.cap="Scatterplot of features showing the relationship between med_cor and med_snr, with colors indicating the model likelihood estimation for known good features (filled circles), known bad features (X characters), and unclassified feature (open circles). The logistic fit can be seen as diagonal stripes of a given color descending from the upper left to the bottom right."}
 pred_probs <- logModelFeatProb(shape_metrics, class_labels)
 ```
 
@@ -323,7 +328,7 @@ final_xcms <- updateXcmsObjFeats(xcms_filled, shape_metrics, class_labels,
 )
 ```
 
-This final XCMS object can then be passed to downstream software with confidence!
+This final XCMS object can then be passed to downstream software and pipelines with confidence!
 
 # Vignette diagnostics
 
