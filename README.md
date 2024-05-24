@@ -20,7 +20,7 @@ library(squallms)
 
 ### Step 1: Metric extraction
 
-`squallms` obtains peak quality metrics in two ways. First, it compares individual MS features to an idealized bell shape as detailed in Kumler et al. 2023 (figure below) to extract the beta_cor and beta_snr metrics. Second, it constructs a retention time by filename by normalized intensity matrix and performs a PCA to extract the dominant feature signal - typically also a bell curve represented in the first or second principal components. The PCs are used to group together similar features for rapid annotation in Step 2, while the beta_cor and beta_snr metrics are used alongside the labels to construct the logistic model in Step 3 below.
+`squallms` obtains peak quality metrics in two ways. First, it compares individual MS features to an idealized bell shape as detailed in [Kumler et al. 2023](https://doi.org/10.1186/s12859-023-05533-4) (figure below) to extract the beta_cor and beta_snr metrics. Second, it constructs a retention time by filename by normalized intensity matrix and performs a PCA to extract the dominant feature signal - typically also a bell curve represented in the first or second principal components. The PCs are used to group together similar features for rapid annotation in Step 2, while the beta_cor and beta_snr metrics are used alongside the labels to construct the logistic model in Step 3 below.
 
 ![](https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs12859-023-05533-4/MediaObjects/12859_2023_5533_Fig8_HTML.png)
 
