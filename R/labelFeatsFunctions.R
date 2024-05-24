@@ -106,8 +106,8 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_wi
 #' "Labeled", the classifier will target (and overwrite) existing labels.
 #' Otherwise, the classifier will randomly target any feature whether previously
 #' classified or not.
-#' @param ppm The parts-per-million window of the extracted ion chromatogram
-#' @param rt_width The width of the retention time window for the extracted
+#' @param ppm_window_width The parts-per-million window of the extracted ion chromatogram
+#' @param rt_window_width The width of the retention time window for the extracted
 #' ion chromatogram, in minutes.
 #' @param verbosity Scalar value between zero and two determining how much
 #' diagnostic information is produced. Zero should return nothing, one should

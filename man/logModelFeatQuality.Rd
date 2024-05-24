@@ -27,8 +27,9 @@ the predictive features exist in the feature_metrics data.frame.}
 kept if their predicted probability exceeds.}
 
 \item{verbosity}{Scalar value between zero and two determining how much
-diagnostic information is produced. Zero should return nothing, one should
-return text-based progress markers, and 2 will return diagnostic plots.}
+diagnostic information is produced. 0 should return nothing, 1 should
+return text-based progress markers, and 2 will return diagnostic plots if
+available.}
 }
 \value{
 A character vector of feature quality assessments returned by the

@@ -28,8 +28,9 @@ data with columns for filename, rt, mz, and int. If not provided, the files
 are detected from the filepath column in peak_data.}
 
 \item{verbosity}{Scalar value between zero and two determining how much
-diagnostic information is produced. Zero should return nothing, one should
-return text-based progress markers, and 2 will return diagnostic plots.}
+diagnostic information is produced. 0 should return nothing, 1 should
+return text-based progress markers, and 2 will return diagnostic plots if
+available.}
 }
 \value{
 A data.frame containing one row for each feature in peak_data, with

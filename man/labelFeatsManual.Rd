@@ -9,7 +9,9 @@ labelFeatsManual(
   ms1_data = NULL,
   existing_labels = NULL,
   selection = "Unlabeled",
-  verbosity = 1
+  verbosity = 1,
+  ppm_window_width = 5,
+  rt_window_width = 2
 )
 }
 \arguments{
@@ -37,6 +39,11 @@ classified or not.}
 \item{verbosity}{Scalar value between zero and two determining how much
 diagnostic information is produced. Zero should return nothing, one should
 return text-based progress markers, and 2 will return diagnostic plots.}
+
+\item{ppm_window_width}{The parts-per-million window of the extracted ion chromatogram}
+
+\item{rt_window_width}{The width of the retention time window for the extracted
+ion chromatogram, in minutes.}
 }
 \value{
 A character vector named with feature IDs containing the classifications
