@@ -142,7 +142,8 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_wi
 #'     manual_labels <- labelFeatsManual(peak_data)
 #' }
 labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
-                             selection = "Unlabeled", verbosity = 1) {
+                             selection = "Unlabeled", verbosity = 1, 
+                             ppm_window_width=5, rt_window_width=2) {
     feat_data <- peak_data %>%
         group_by(feature) %>%
         summarise(mzmed = median(mz), rtmed = median(rt))
@@ -165,6 +166,7 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
     }
 
     feat_class_vec <- rep(NA, nrow(feat_data))
+    names(feat_class_vec) <- feat_data$feature
 
     prev_feat_idx <- numeric()
     backspace_triggered <- FALSE
@@ -186,7 +188,9 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
             chosen_feat_idx <- sample(feature_subset, 1)
         }
         if (interactive()) {
-            feat_label <- labelSingleFeat(feat_data[chosen_feat_idx, ], ms1_data)
+            feat_label <- labelSingleFeat(feat_data[chosen_feat_idx, ], ms1_data, 
+                                          ppm_window_width = ppm_window_width, 
+                                          rt_window_width = rt_window_width)
             if (feat_label == "Quit") {
                 break
             } else if (feat_label == "Backspace") {
