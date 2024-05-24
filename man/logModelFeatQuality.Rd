@@ -65,6 +65,8 @@ xcms_filled <- mzML_files \%>\%
     fillChromPeaks(FillChromPeaksParam(ppm = 5))
 peak_data <- makeXcmsObjFlat(xcms_filled)
 feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+
+# Load demo labels previously assigned using the lasso method
 lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
 feat_classes <- logModelFeatQuality(feat_metrics, lasso_classes)
 }

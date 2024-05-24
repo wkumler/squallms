@@ -19,10 +19,10 @@ in minutes (rtmed).}
 \item{ms1_data}{A data.table containing mz, rt, and int columns containing
 the MS1 data from which the feature's chromatogram should be extracted.}
 
+\item{ppm_window_width}{The parts-per-million window of the extracted ion chromatogram}
+
 \item{rt_window_width}{The width of the retention time window for the extracted
 ion chromatogram, in minutes.}
-
-\item{ppm}{The parts-per-million window of the extracted ion chromatogram}
 }
 \value{
 A scalar character corresponding to either "Quit", "Backspace",
@@ -38,7 +38,8 @@ as "Good". Up and down arrows can be bound to additional classifications if
 desired by editing the code, though a future update may provide more control.
 }
 \examples{
-mzML_files <- system.file("extdata", package = "RaMS") \%>\%
+library(RaMS)
+mzML_files <- system.file("extdata", package = "RaMS") |>
     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 msdata <- grabMSdata(mzML_files, verbosity=0)
 

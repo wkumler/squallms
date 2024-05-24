@@ -41,9 +41,8 @@ metrics can be passed as well (but be careful of overfitting!).
 }
 \examples{
 library(xcms)
-library(dplyr)
 library(MSnbase)
-mzML_files <- system.file("extdata", package = "RaMS") \%>\%
+mzML_files <- system.file("extdata", package = "RaMS") |>
     list.files(full.names = TRUE, pattern = "[A-F].mzML")
 register(BPPARAM = SerialParam())
 cwp <- CentWaveParam(snthresh = 0, extendLengthMSW = TRUE, integrate = 2)
@@ -52,14 +51,16 @@ pdp <- PeakDensityParam(
     sampleGroups = 1:3, bw = 12, minFraction = 0,
     binSize = 0.001, minSamples = 0
 )
-xcms_filled <- mzML_files \%>\%
-    readMSData(msLevel. = 1, mode = "onDisk") \%>\%
-    findChromPeaks(cwp) \%>\%
-    adjustRtime(obp) \%>\%
-    groupChromPeaks(pdp) \%>\%
+xcms_filled <- mzML_files |>
+    readMSData(msLevel. = 1, mode = "onDisk") |>
+    findChromPeaks(cwp) |>
+    adjustRtime(obp) |>
+    groupChromPeaks(pdp) |>
     fillChromPeaks(FillChromPeaksParam(ppm = 5))
 peak_data <- makeXcmsObjFlat(xcms_filled)
 feat_metrics <- extractChromMetrics(peak_data, verbosity = 0)
+
+# Load demo labels previously assigned using the lasso method
 lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
 feat_probs <- logModelFeatProb(feat_metrics, lasso_classes)
 }
