@@ -13,7 +13,7 @@ labelSingleFeat(
 }
 \arguments{
 \item{feature_data_i}{Information associated with a single chromatographic
-feature, most importantly its central *m/z* value (mzmed) and retention time 
+feature, most importantly its central *m/z* value (mzmed) and retention time
 in minutes (rtmed).}
 
 \item{ms1_data}{A data.table containing mz, rt, and int columns containing
@@ -30,7 +30,7 @@ A scalar character corresponding to either "Quit", "Backspace",
 window is active.
 }
 \description{
-This function is the core operation of the labelFeatsManual function. 
+This function is the core operation of the labelFeatsManual function.
 The plot appears in a new window and is set up to detect key presses which
 have been bound to specific classifications. Currently, the left arrow key
 categorizes the feature as "Bad" while the right arrow key categorizes it
@@ -41,13 +41,15 @@ desired by editing the code, though a future update may provide more control.
 library(RaMS)
 mzML_files <- system.file("extdata", package = "RaMS") |>
     list.files(full.names = TRUE, pattern = "[A-F].mzML")
-msdata <- grabMSdata(mzML_files, verbosity=0)
+msdata <- grabMSdata(mzML_files, verbosity = 0)
 
-if(interactive()){
-    labelSingleFeat(data.frame(mzmed=118.0865, rtmed=7.8), ms1_data=msdata$MS1)
+if (interactive()) {
+    labelSingleFeat(data.frame(mzmed = 118.0865, rtmed = 7.8), ms1_data = msdata$MS1)
 }
 
 # Returns "Bad" if the extracted ion chromatogram has fewer than 5 scans
-labelSingleFeat(data.frame(mzmed=50.000, rtmed=5), ms1_data=msdata$MS1,
-                ppm_window_width=1, rt_window_width = 10)
+labelSingleFeat(data.frame(mzmed = 50.000, rtmed = 5),
+    ms1_data = msdata$MS1,
+    ppm_window_width = 1, rt_window_width = 10
+)
 }

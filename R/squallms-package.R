@@ -1,22 +1,22 @@
 #' @md
 #' @details
 #' squallms is an R package that allows for the identification and removal of
-#' low-quality chromatographic features from mass-spectrometry data. This 
+#' low-quality chromatographic features from mass-spectrometry data. This
 #' process involves three steps: first, the calculation of peak quality
-#' metrics via [extractChromMetrics()]; second, labeling of high and low quality 
+#' metrics via [extractChromMetrics()]; second, labeling of high and low quality
 #' features either one at a time with [labelFeatsManual()] or in bulk with
 #' [labelFeatsLasso()]; and finally, probabilistic model construction using
 #' [logModelFeatQuality()].
-#' 
+#'
 #' The package interfaces neatly with XCMS, providing two additional functions
 #' that turn an XCMS object into a flat file ([makeXcmsObjFlat()]) and edit
 #' the XCMS object's feature list to contain only high quality features
 #' ([updateXcmsObjFeats()]). Data can be provided without using XCMS if it
-#' is properly formatted (see the help pages). 
-#' 
+#' is properly formatted (see the help pages).
+#'
 #' See the package intro on GitHub at https://github.com/wkumler/squallms and
 #' explore the vignettes with \code{vignette("intro_to_squallms", package = "squallms")}
-#' 
+#'
 #' @keywords internal
 "_PACKAGE"
 

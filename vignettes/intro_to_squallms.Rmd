@@ -72,7 +72,7 @@ pdp <- PeakDensityParam(
 
 
 xcms_major_version <- as.numeric(substr(as.character(packageVersion("xcms")), 1, 1))
-if(xcms_major_version>=4){
+if (xcms_major_version >= 4) {
     library(MSnbase)
     msexp <- readMSData(mzML_files, msLevel. = 1, mode = "onDisk")
     fpp <- FillChromPeaksParam(ppm = 5)
@@ -150,13 +150,14 @@ some_random_feats %>%
     )) %>%
     qplotMS1data(color_col = "med_cor") +
     geom_vline(aes(xintercept = med_rt), color = "red") +
-    geom_text(aes(x=Inf, y=Inf, label=paste0("SNR: ", round(med_snr))), 
-               data=some_random_feats, hjust=1, vjust=1, color="black") +
+    geom_text(aes(x = Inf, y = Inf, label = paste0("SNR: ", round(med_snr))),
+        data = some_random_feats, hjust = 1, vjust = 1, color = "black"
+    ) +
     facet_wrap(~feature, scales = "free", nrow = 3) +
-    scale_color_continuous(limits=c(0, 1), name="Peak shape metric") +
+    scale_color_continuous(limits = c(0, 1), name = "Peak shape metric") +
     scale_y_continuous(expand = expansion(c(0, 0.25))) +
-    theme(legend.position.inside=c(0.82, 0.12), legend.position = "inside") +
-    guides(color=guide_colorbar(direction = "horizontal", title.position="top"))
+    theme(legend.position.inside = c(0.82, 0.12), legend.position = "inside") +
+    guides(color = guide_colorbar(direction = "horizontal", title.position = "top"))
 ```
 
 As expected, many "noise" signals were picked up, even in this precleaned demo dataset. Fortunately, it also looks like our peak quality metrics are doing a reasonable job of distinguishing features that look ok (e.g. FT014, FT179) from those of poor quality (e.g. FT118, FT050) with lower values for med_cor and med_snr in the noisy features.
@@ -187,7 +188,7 @@ rtbounds <- row_data$rtmed + c(-1, 1)
 eic <- msdata$MS1[mz %between% mzbounds][rt %between% rtbounds] %>% arrange(filename, rt)
 
 plot(eic$rt, eic$int, type = "l", ylab = "Intensity", xlab = "Retention time")
-abline(v = row_data$rtmed, col="red")
+abline(v = row_data$rtmed, col = "red")
 title(paste(row_data$feature, round(mzbounds[1], 7)))
 ```
 
@@ -197,7 +198,7 @@ The `labelFeatsManual` function returns a vector containing the assigned quality
 
 ```{r load_prior_manual_labels}
 manual_classes <- readRDS(system.file("extdata", "intro_manual_labels.rds", package = "squallms"))
-table(manual_classes, useNA="ifany")
+table(manual_classes, useNA = "ifany")
 ```
 
 ## Lasso labeling with labelFeatsLasso
@@ -260,13 +261,13 @@ lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
 
 ```{r goodss, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
-knitr::include_graphics(file.path(here::here(),"vignettes","intro_good_ss.png"), rel_path = FALSE)
+knitr::include_graphics(file.path(here::here(), "vignettes", "intro_good_ss.png"), rel_path = FALSE)
 ```
 
 Of course, a training set needs examples of low-quality peaks as well. I then browsed other features in the central plot until finding a region of low-quality features that I could similarly select using the lasso tool and flag as Bad. Multiple regions can be selected and combined with additional lassos, and of course the rectangle selection tool can be used instead of the freehand.
 
 ```{r badss, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
-knitr::include_graphics(file.path(here::here(),"vignettes","intro_bad_ss.png"), rel_path = FALSE)
+knitr::include_graphics(file.path(here::here(), "vignettes", "intro_bad_ss.png"), rel_path = FALSE)
 ```
 
 
@@ -278,7 +279,7 @@ After both good and bad features have been flagged, clicking the "Return to R" b
 
 ```{r load_prior_lasso_labels}
 lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
-table(lasso_classes, useNA="ifany")
+table(lasso_classes, useNA = "ifany")
 ```
 
 If you're unsure how well the lasso performed, you can easily pass this vector back to the manual labeling tool with `selection = "Labeled"` to double-check on the agreement between the lasso and the manual methods.

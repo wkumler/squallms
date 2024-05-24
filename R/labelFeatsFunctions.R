@@ -1,6 +1,6 @@
 #' Label a single chromatographic feature
-#' 
-#' This function is the core operation of the labelFeatsManual function. 
+#'
+#' This function is the core operation of the labelFeatsManual function.
 #' The plot appears in a new window and is set up to detect key presses which
 #' have been bound to specific classifications. Currently, the left arrow key
 #' categorizes the feature as "Bad" while the right arrow key categorizes it
@@ -8,7 +8,7 @@
 #' desired by editing the code, though a future update may provide more control.
 #'
 #' @param feature_data_i Information associated with a single chromatographic
-#' feature, most importantly its central *m/z* value (mzmed) and retention time 
+#' feature, most importantly its central *m/z* value (mzmed) and retention time
 #' in minutes (rtmed).
 #' @param ms1_data A data.table containing mz, rt, and int columns containing
 #' the MS1 data from which the feature's chromatogram should be extracted.
@@ -25,18 +25,20 @@
 #' library(RaMS)
 #' mzML_files <- system.file("extdata", package = "RaMS") |>
 #'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
-#' msdata <- grabMSdata(mzML_files, verbosity=0)
-#' 
-#' if(interactive()){
-#'     labelSingleFeat(data.frame(mzmed=118.0865, rtmed=7.8), ms1_data=msdata$MS1)
+#' msdata <- grabMSdata(mzML_files, verbosity = 0)
+#'
+#' if (interactive()) {
+#'     labelSingleFeat(data.frame(mzmed = 118.0865, rtmed = 7.8), ms1_data = msdata$MS1)
 #' }
-#' 
+#'
 #' # Returns "Bad" if the extracted ion chromatogram has fewer than 5 scans
-#' labelSingleFeat(data.frame(mzmed=50.000, rtmed=5), ms1_data=msdata$MS1,
-#'                 ppm_window_width=1, rt_window_width = 10)
-labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_window_width=2) {
+#' labelSingleFeat(data.frame(mzmed = 50.000, rtmed = 5),
+#'     ms1_data = msdata$MS1,
+#'     ppm_window_width = 1, rt_window_width = 10
+#' )
+labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width = 10, rt_window_width = 2) {
     mzbounds <- pmppm(feature_data_i$mzmed, ppm_window_width)
-    rtbounds <- feature_data_i$rtmed + c(-1, 1)*rt_window_width/2
+    rtbounds <- feature_data_i$rtmed + c(-1, 1) * rt_window_width / 2
     eic <- ms1_data[mz %between% mzbounds][rt %between% rtbounds] %>%
         arrange(rt)
     if (nrow(eic) < 5) {
@@ -48,20 +50,20 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_wi
     for (j in unique(eic$filename)) {
         lines(eic[eic$filename == j, c("rt", "int")])
     }
-    abline(v=feature_data_i$rtmed, col="red")
+    abline(v = feature_data_i$rtmed, col = "red")
     axis(1)
     title(paste(feature_data_i$feature, round(mzbounds[1], 7)))
     keyinput <- getGraphicsEvent(prompt = "", onKeybd = function(x) {
         return(x)
     })
     dev.off()
-    if (length(keyinput)==0){
+    if (length(keyinput) == 0) {
         return("Quit")
     }
     if (keyinput == "ctrl-[") { # aka Esc button ctrl-[
         return("Quit")
     }
-    if( keyinput == "ctrl-H") { # aka Backspace button
+    if (keyinput == "ctrl-H") { # aka Backspace button
         return("Backspace")
     }
     if (!keyinput %in% c("Right", "Left", "Up")) {
@@ -139,12 +141,12 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width=10, rt_wi
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(xcms_filled)
-#' if(interactive()){
+#' if (interactive()) {
 #'     manual_labels <- labelFeatsManual(peak_data)
 #' }
 labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
-                             selection = "Unlabeled", verbosity = 1, 
-                             ppm_window_width=5, rt_window_width=2) {
+                             selection = "Unlabeled", verbosity = 1,
+                             ppm_window_width = 5, rt_window_width = 2) {
     feat_data <- peak_data %>%
         group_by(feature) %>%
         summarise(mzmed = median(mz), rtmed = median(rt))
@@ -189,9 +191,10 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
             chosen_feat_idx <- sample(feature_subset, 1)
         }
         if (interactive()) {
-            feat_label <- labelSingleFeat(feat_data[chosen_feat_idx, ], ms1_data, 
-                                          ppm_window_width = ppm_window_width, 
-                                          rt_window_width = rt_window_width)
+            feat_label <- labelSingleFeat(feat_data[chosen_feat_idx, ], ms1_data,
+                ppm_window_width = ppm_window_width,
+                rt_window_width = rt_window_width
+            )
             if (feat_label == "Quit") {
                 break
             } else if (feat_label == "Backspace") {
@@ -406,7 +409,7 @@ classyfeatServer <- function(input, output, session, pcaoutput, interp_df,
 #'     groupChromPeaks(pdp) %>%
 #'     fillChromPeaks(FillChromPeaksParam(ppm = 5))
 #' peak_data <- makeXcmsObjFlat(xcms_filled)
-#' if(interactive()){
+#' if (interactive()) {
 #'     lasso_labels <- labelFeatsLasso(peak_data)
 #' }
 labelFeatsLasso <- function(peak_data, ms1_data = NULL, rt_window_width = 1,

@@ -83,7 +83,7 @@ xcms_filled <- mzML_files \%>\%
     groupChromPeaks(pdp) \%>\%
     fillChromPeaks(FillChromPeaksParam(ppm = 5))
 peak_data <- makeXcmsObjFlat(xcms_filled)
-if(interactive()){
+if (interactive()) {
     manual_labels <- labelFeatsManual(peak_data)
 }
 }
