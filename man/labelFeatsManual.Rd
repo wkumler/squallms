@@ -2,17 +2,9 @@
 % Please edit documentation in R/labelFeatsFunctions.R
 \name{labelFeatsManual}
 \alias{labelFeatsManual}
-\title{Label chromatographic features manually}
+\title{Label chromatographic features manually one at a time via interactive interface}
 \usage{
-labelFeatsManual(
-  peak_data,
-  ms1_data = NULL,
-  existing_labels = NULL,
-  selection = "Unlabeled",
-  verbosity = 1,
-  ppm_window_width = 5,
-  rt_window_width = 2
-)
+labelFeatsManual(peak_data, ms1_data = NULL, verbosity = 1)
 }
 \arguments{
 \item{peak_data}{Flat-form XC-MS data with columns for the bounding box of
@@ -24,26 +16,9 @@ to the values in the raw data.}
 data with columns for filename, rt, mz, and int. If not provided, the files
 are detected from the filepath column in peak_data.}
 
-\item{existing_labels}{A character vector of equal length to the number of
-features in peak_data named with feature IDs. Can be used to provide a
-previously-existing partially-labeled dataset or double-check existing
-classifications.}
-
-\item{selection}{Either the string "Labeled" or "Unlabeled". If "Unlabeled",
-the classifier will target entries in the dataset that have not yet received
-a classification (i.e. those that have NA values in existing_labels). If
-"Labeled", the classifier will target (and overwrite) existing labels.
-Otherwise, the classifier will randomly target any feature whether previously
-classified or not.}
-
 \item{verbosity}{Scalar value between zero and two determining how much
-diagnostic information is produced. Zero should return nothing, one should
-return text-based progress markers, and 2 will return diagnostic plots.}
-
-\item{ppm_window_width}{The parts-per-million window of the extracted ion chromatogram}
-
-\item{rt_window_width}{The width of the retention time window for the extracted
-ion chromatogram, in minutes.}
+diagnostic information is produced. 0 should return nothing while 1 will
+report diagnostic messages.}
 }
 \value{
 A character vector named with feature IDs containing the classifications
@@ -51,17 +26,15 @@ of each peak that was viewed during the interactive phase. NA values indicate
 those features that were not classified.
 }
 \description{
-This function provides an interactive interface to a labeling function that
-plots one chromatographic feature at a time, showing the data from all the
-files in ms1_data within 1 minute of retention time and 10 ppm m/z space.
-The plot appears in a new window and is set up to detect key presses which
-have been bound to specific classifications. Currently, the left arrow key
-categorizes the feature as "Bad" while the right arrow key categorizes it
-as "Good". Up and down arrows can be bound to additional classifications if
-desired by editing the code, though a future update may provide more control.
-Classifications are returned as a character vector named with the feature
-IDs even if the full dataset is not classified. Exit the classifier with
-the Escape key.
+This function allows the user to view and label individual chromatographic
+features using the keyboard. Running labelFeatsManual launches a browser
+which shows a single feature extracted from multiple files. The feature can
+then be classified by pressing a key (defaults are left=bad, right=good) on 
+the keyboard which is recorded and a new feature is automatically shown.This 
+implementation relies on R's \pkg{shiny} package
+to provide interactive support in a browser environment and the
+\pkg{keys} package for key binding within a browser. Classified features are then
+returned as a simple R object for downstream use.
 }
 \examples{
 library(xcms)

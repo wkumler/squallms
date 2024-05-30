@@ -50,7 +50,7 @@ utils::globalVariables(c(
 #' @importFrom caret confusionMatrix
 #' @rawNamespace import(stats, except = c(lag, filter, smooth, sigma))
 #' @rawNamespace import(graphics, except = c(layout))
-#' @importFrom grDevices dev.new dev.off getGraphicsEvent
 #' @importFrom utils head globalVariables
 #' @importFrom MsExperiment readMsExperiment
+#' @import keys
 NULL

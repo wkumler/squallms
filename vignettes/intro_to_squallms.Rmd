@@ -121,8 +121,7 @@ shape_metrics <- extractChromMetrics(feat_peak_info, ms1_data = msdata$MS1)
 knitr::kable(head(shape_metrics), caption = "Format of the output from extractChromMetrics")
 ```
 
-
-```{r plot metrics, warning=FALSE, fig.cap="Mass by time diagram of all features returned by XCMS. Points have been colored by their calculated peak shape metric and are sized by their calculated signal-to-noise ratio. Large, pale points tend to be higher quality than small dark ones."}
+```{r plotmetrics, warning=FALSE, fig.cap="Mass by time diagram of all features returned by XCMS. Points have been colored by their calculated peak shape metric and are sized by their calculated signal-to-noise ratio. Large, pale points tend to be higher quality than small dark ones."}
 shape_metrics %>%
     arrange(desc(med_snr)) %>%
     ggplot() +
@@ -170,31 +169,21 @@ Labeling chromatographic features is usually a slow and painful step. XCMS's met
 
 ## Manual labeling with labelFeatsManual
 
-`labelFeatsManual` accepts the data frame of peak information constructed above and renders one random feature at a time in a new plotting window. This plot window then detects when arrow keys are pressed which have been bound to specific classifications. Currently, the left arrow key categorizes the feature as "Bad" while the right arrow key categorizes it as "Good". The up arrow key also classifies it as "Revisit" for later analysis. Once pressed, a new window pops up with a new random feature. The backspace button can also be used to revisit the previous peak in case of accidental or incorrect assignment. This process repeats until the Escape key is pressed or there are no features left to label. Alternatively, this function can be used to double-check existing classifications if the `existing_labels` argument is provided and the selection is set to "Labeled" (see below).
+`labelFeatsManual` accepts the data frame of peak information constructed above and launches a Shiny application to show one feature at a time. This application detects when arrow keys have been pressed and uses them as a data entry method for peak classification. Assignments can be made sequentially or randomly and specific features can be jumped to for rapid inspection. While the default settings use the arrow keys to label, these keys can be rebound using the "Reassign" button to suit the user's convenience. 
 
 ```{r labelFeatsManual, eval=FALSE}
+# Chunk not run during vignette build because interactive input required
+# Annotations may differ from the saved output loaded below based on user preference
 manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1)
 ```
 
-The plot that's shown for each feature looks like the one below, with the feature ID and median *m/z* value shown in the title while the typical chromatogram is produced as a line plot of intensity plotted against retention time.
-
-```{r plotManualFeatWindow, fig.cap="Extracted ion chromatogram of the first feature in the dataset as would be seen via labelFeatsManual."}
-row_data <- feat_peak_info %>%
-    group_by(feature) %>%
-    summarise(mzmed = median(mz), rtmed = median(rt)) %>%
-    filter(feature == "FT001")
-mzbounds <- pmppm(row_data$mzmed, 10)
-rtbounds <- row_data$rtmed + c(-1, 1)
-eic <- msdata$MS1[mz %between% mzbounds][rt %between% rtbounds] %>% arrange(filename, rt)
-
-plot(eic$rt, eic$int, type = "l", ylab = "Intensity", xlab = "Retention time")
-abline(v = row_data$rtmed, col = "red")
-title(paste(row_data$feature, round(mzbounds[1], 7)))
+```{r plotManualFeatWindow, echo=FALSE, fig.cap="Screenshot of lasso labeling dashboard showing the first feature in the dataset as seen via labelFeatsManual."}
+knitr::include_graphics(file.path(here::here(), "vignettes", "intro_manual_ss.png"), rel_path = FALSE)
 ```
 
-This first peak looks reasonably good, so I would assign this a "Good" classification with a right-arrow key press.
+This first peak looks reasonably good, so I would assign this a "Good" classification with a right-arrow key press which would then trigger the rendering of the next feature.
 
-The `labelFeatsManual` function returns a vector containing the assigned quality assessments, with NAs for each feature that wasn't labeled. An example of this output can be found included in the package for demonstration purposes and is loaded here for use in the rest of the vignette.
+The `labelFeatsManual` function returns a vector containing the assigned quality assessments, with NAs for each feature that wasn't labeled. An example of this output can be found included in the package for demonstration purposes and is loaded here for use in the rest of the vignette. Your annotations may differ from those that I established during development due to differences in quality tolerance, further highlighting the importance of an individually-driven annotation cycle.
 
 ```{r load_prior_manual_labels}
 manual_classes <- readRDS(system.file("extdata", "intro_manual_labels.rds", package = "squallms"))
@@ -255,27 +244,28 @@ pcaoutput$pcamat %>%
 Of course, such separation isn't guaranteed to be consistently to the left or right and isn't always neatly along one axis. While a line between good and bad could be drawn with complicated math expressions, a much easier way is to simply engage an interactive visualization allowing for arbitrary selection. R's `shiny` and `plotly` packages are perfect for this method, so `squallms` has a built-in Shiny application that launches in the browser and can be used to select such peaks using the "lasso" tool - thus, the "lasso labeling" part of the package name.
 
 ```{r labelFeatsLasso, eval=FALSE}
+# Chunk not run during vignette build because interactive input required
+# Annotations may differ from the saved output loaded below based on user preference
 lasso_classes <- labelFeatsLasso(feat_peak_info, ms1_data = msdata$MS1)
 ```
 
 In the screenshot below, I've moused over the feature IDs in the central plot as they render one at a time in the bottom left. Once I find a cluster where many high-quality features are found, I clicked and dragged to select a region of good features, which rendered the "aggregate" feature in the bottom right. Shortly after, I clicked the "Flag selection as Good" at the bottom of the left sidebar.
 
-```{r goodss, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
+```{r goodss, echo=FALSE, fig.cap="Screenshot of lasso labeling dashboard when 'Good' features are being lassoed in the principal components graph. Central plot shows the interactive PCA with feature IDs set to react to both mouse hover and lasso selection. Hovering over a given feature shows its extracted ion chromatogram in the lower left plot. Clicking and dragging to select multiple features with the lasso option produces the lower right figure which represents the aggregate chromatogram after normalization. Plot in the upper right shows the aggregate chromatogram for each cluster of the central PCA."}
 knitr::include_graphics(file.path(here::here(), "vignettes", "intro_good_ss.png"), rel_path = FALSE)
 ```
 
 Of course, a training set needs examples of low-quality peaks as well. I then browsed other features in the central plot until finding a region of low-quality features that I could similarly select using the lasso tool and flag as Bad. Multiple regions can be selected and combined with additional lassos, and of course the rectangle selection tool can be used instead of the freehand.
 
-```{r badss, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
+```{r badss, echo=FALSE, fig.cap="Screenshot of lasso labeling dashboard when 'Bad' features are being lassoed in the principal components graph."}
 knitr::include_graphics(file.path(here::here(), "vignettes", "intro_bad_ss.png"), rel_path = FALSE)
 ```
-
 
 In this case, the good/bad signal was so strongly dominant that I had no need for additional principal components and really only needed the first one to capture my internal sense of peak quality. However, other datasets may not identify the quality signal as the first or even second PC, especially if there's a large biological signal present. To handle this case, I added a k-means clustering algorithm that operates on all PCs and renders their aggregate shape in the upper right. Combined with plotly's ability to show or hide individual clusters by double-clicking the plot legend, this allows the user to isolate regions in multidimensional space while still only showing the first two PCs in the plot. Both k and the number of PCs used for the k-means clustering can be set in the left sidebar, while a simple barplot provides information about the number of PCs that capture 20, 50, and 80% of the variation in the dataset.
 
 While both the number of clusters and the number of PCs used are arbitrary, the idea is that these provide a way to capture variation beyond the first two principal componenents if the initial distribution is unhelpful. I would recommend increasing the number of PCs used to capture 50+% of the variation, while the number of clusters can be toggled until the groups in the aggregate plots in the upper right look good and an entire cluster can be grabbed at one time.
 
-After both good and bad features have been flagged, clicking the "Return to R" button at the bottom of the sidebar or closing the window will return a character vector consisting of "Good", "Bad", and NAs named by the feature with which those labels were associated. As before, I saved the output from a previous session on the demo data using the lassos shown in the screenshots above and have provided it alongside for demonstration purposes.
+After both good and bad features have been flagged, clicking the "Return to R" button at the bottom of the sidebar or closing the window will return a character vector consisting of "Good", "Bad", and NAs named by the feature with which those labels were associated. As before, I saved the output from a previous session on the demo data using the lassos shown in the screenshots above and have provided it alongside for demonstration purposes. Again, your exact values may differ from those provided here due to variable tolerances for feature quality.
 
 ```{r load_prior_lasso_labels}
 lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", package = "squallms"))
@@ -325,7 +315,7 @@ The values returned by `logModelFeatProb` can then be handled manually, or you c
 pred_classes <- logModelFeatQuality(shape_metrics, class_labels, verbosity = 1)
 ```
 
-Finally, once an appropriate threshold has been set and the model's performance is acceptable the XCMS object itself can be edited to remove the poor-quality peaks. This function also notes `squallms` in the object's processing history (albeit poorly).
+Finally, once an appropriate threshold has been set and the model's performance is acceptable the XCMS object itself can be edited to remove the poor-quality peaks.
 
 ```{r updateXcmsObjFeats}
 final_xcms <- updateXcmsObjFeats(xcms_filled, shape_metrics, class_labels,
