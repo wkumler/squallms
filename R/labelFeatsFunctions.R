@@ -238,8 +238,8 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, verbosity = 1) {
         feat_class_vec <- runApp(manualdef)
     } else {
         warning("Not running in interactive mode, returning NA")
-        feat_class_vec <- rep(NA, length(feat_vec))
-        names(feat_class_vec) <- feat_vec
+        feat_class_vec <- rep(NA, nrow(feat_data))
+        names(feat_class_vec) <- feat_class_vec
     }
     
     if (verbosity > 0) {
