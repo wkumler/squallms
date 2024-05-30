@@ -37,8 +37,8 @@ Imports:
     caret,
     stats,
     graphics,
-    grDevices,
-    utils
+    utils,
+    keys
 Suggests:
     knitr,
     rmarkdown,
