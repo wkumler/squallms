@@ -1,96 +1,174 @@
-#' Label a single chromatographic feature
-#'
-#' This function is the core operation of the labelFeatsManual function.
-#' The plot appears in a new window and is set up to detect key presses which
-#' have been bound to specific classifications. Currently, the left arrow key
-#' categorizes the feature as "Bad" while the right arrow key categorizes it
-#' as "Good". Up and down arrows can be bound to additional classifications if
-#' desired by editing the code, though a future update may provide more control.
-#'
-#' @param feature_data_i Information associated with a single chromatographic
-#' feature, most importantly its central *m/z* value (mzmed) and retention time
-#' in minutes (rtmed).
-#' @param ms1_data A data.table containing mz, rt, and int columns containing
-#' the MS1 data from which the feature's chromatogram should be extracted.
-#' @param ppm_window_width The parts-per-million window of the extracted ion chromatogram
-#' @param rt_window_width The width of the retention time window for the extracted
-#' ion chromatogram, in minutes.
-#'
-#' @return A scalar character corresponding to either "Quit", "Backspace",
-#' "Good", "Bad", or "Revisit", depending on what key is pressed while the plot
-#' window is active.
-#' @export
-#'
-#' @examples
-#' library(RaMS)
-#' mzML_files <- system.file("extdata", package = "RaMS") |>
-#'     list.files(full.names = TRUE, pattern = "[A-F].mzML")
-#' msdata <- grabMSdata(mzML_files, verbosity = 0)
-#'
-#' if (interactive()) {
-#'     labelSingleFeat(data.frame(mzmed = 118.0865, rtmed = 7.8), ms1_data = msdata$MS1)
-#' }
-#'
-#' # Returns "Bad" if the extracted ion chromatogram has fewer than 5 scans
-#' labelSingleFeat(data.frame(mzmed = 50.000, rtmed = 5),
-#'     ms1_data = msdata$MS1,
-#'     ppm_window_width = 1, rt_window_width = 10
-#' )
-labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width = 10, rt_window_width = 2) {
-    mzbounds <- pmppm(feature_data_i$mzmed, ppm_window_width)
-    rtbounds <- feature_data_i$rtmed + c(-1, 1) * rt_window_width / 2
-    eic <- ms1_data[mz %between% mzbounds][rt %between% rtbounds] %>%
-        arrange(rt)
-    if (nrow(eic) < 5) {
-        return("Bad")
-    }
-    dev.new(width = 8, height = 6, xpos = 20, ypos = 20)
-    plot.new()
-    plot.window(xlim = rtbounds, ylim = c(0, max(eic$int)), mar = c(1.1, 0.1, 0.1, 0.1))
-    for (j in unique(eic$filename)) {
-        lines(eic[eic$filename == j, c("rt", "int")])
-    }
-    abline(v = feature_data_i$rtmed, col = "red")
-    axis(1)
-    title(paste(feature_data_i$feature, round(mzbounds[1], 7)))
-    keyinput <- getGraphicsEvent(prompt = "", onKeybd = function(x) {
-        return(x)
-    })
-    dev.off()
-    if (length(keyinput) == 0) {
-        return("Quit")
-    }
-    if (keyinput == "ctrl-[") { # aka Esc button ctrl-[
-        return("Quit")
-    }
-    if (keyinput == "ctrl-H") { # aka Backspace button
-        return("Backspace")
-    }
-    if (!keyinput %in% c("Right", "Left", "Up")) {
-        return("Other")
-    }
-    feat_class <- switch(keyinput,
-        "Right" = "Good",
-        "Left" = "Bad",
-        "Up" = "Revisit"
+
+manualFeatUI <- function(){fluidPage(
+    tags$head(tags$script(HTML("Shiny.addCustomMessageHandler('closeWindow', function(m) {window.close();});"))),
+    useKeys(),
+    keysInput("keys", c(
+        letters, 0:9, "left", "right", "up", "down", "backspace", "esc", "delete"
+    )),
+    sidebarLayout(
+        sidebarPanel(
+            h4("Manual feature labeling tool"),
+            numericInput("rt_window", label = "Retention time window (minutes)",
+                         value = 1, min = 0, step = 1),
+            numericInput("ppm", label = "PPM mass error", value = 2.5, min = 0),
+            checkboxInput("showint", label = "Show intensity axis?"),
+            radioButtons("sequence_method", "What labeling method?",
+                         choices = c("Random", "Sequential"), selected = "Random"),
+            textInput("spec_feature", label="Jump to a specific feature?", width="100%"),
+            checkboxInput("show_keys", label = "Show keybindings?", value = FALSE),
+            uiOutput("keybindings"),
+            hr(style = "border-top: 1px solid #000000;"),
+            actionButton("endsession", label = "Return to R", width = "100%"),
+            style="padding-top: 5px; margin-top: 15px;"
+        ),
+        mainPanel(
+            plotOutput("featureplot")
+        )
     )
-    feat_class
+)}
+manualFeatServer <- function(input, output, session, feat_data, ms1_data) {
+    feature_labels <- reactiveVal(
+        data.frame(feature=feat_data$feature, label=NA)
+    )
+    current_feature_id <- reactiveVal(feat_data[1,]$feature)
+    
+    
+    prev_feature_id <- reactiveVal()
+    
+    observeEvent(input$spec_feature, current_feature_id(input$spec_feature), ignoreInit = TRUE)
+    
+    output$featureplot <- renderPlot({
+        req(input$ppm)
+        req(input$rt_window)
+        req(current_feature_id()%in%feat_data$feature)
+        
+        feature_data_i <- feat_data[feat_data$feature==current_feature_id(),]
+        mzbounds <- pmppm(feature_data_i$mzmed, input$ppm)
+        rtbounds <- feature_data_i$rtmed + c(-1, 1) * input$rt_window / 2
+        eic <- ms1_data[mz %between% mzbounds][rt %between% rtbounds][order(rt)]
+        if(nrow(eic)<5){
+            plot(1, type="n")
+            text(x=1, y=1, labels="EIC does not contain enough data points")
+            title(paste(feature_data_i$feature, round(mzbounds[1], 7)))
+        } else {
+            plot.new()
+            plot.window(xlim = rtbounds, ylim = c(0, max(eic$int)), mar = c(1.1, 0.1, 0.1, 0.1))
+            for (j in unique(eic$filename)) {
+                lines(eic[eic$filename == j, c("rt", "int")])
+            }
+            abline(v = feature_data_i$rtmed, col = "red")
+            axis(1)
+            if(input$showint)axis(2)
+            title(paste(feature_data_i$feature, round(mzbounds[1], 7)))
+        }
+    })
+    observeEvent(input$keys, {
+        if(!remap()){
+            key_action <- current_keys()[current_keys()$Key==input$keys,"Action"]
+            
+            req(key_action)
+            if(key_action%in%c("Good", "Bad", "Revisit", "Ignore")){
+                prev_feature_id(current_feature_id())
+                feature_df <- feature_labels()
+                feature_df$label[feature_df$feature==current_feature_id()] <- key_action
+                feature_labels(feature_df)
+                next_feat_options <- feature_labels()$feature[is.na(feature_labels()$label)]
+                if(length(next_feat_options)==0){
+                    session$sendCustomMessage(type = "closeWindow", message = "message")
+                    output_vec <- feature_labels()$label
+                    names(output_vec) <- feature_labels()$feature
+                    message("All features labeled!")
+                    stopApp(output_vec)
+                }
+                
+                if(input$sequence_method=="Random"){
+                    current_feature_id(sample(next_feat_options, size = 1))
+                } else {
+                    current_feature_id(next_feat_options[1])
+                }
+            }
+            if(key_action=="Undo once"){
+                if(!is.null(prev_feature_id())){
+                    current_feature_id(prev_feature_id())
+                }
+            }
+            if(key_action=="Return to R"){
+                session$sendCustomMessage(type = "closeWindow", message = "message")
+                output_vec <- feature_labels()$label
+                names(output_vec) <- feature_labels()$feature
+                stopApp(output_vec)
+            }
+        } else {
+            if(remap()){
+                keymap <- current_keys()
+                if(!input$keys%in%keymap$Key){
+                    keymap[remap_idx(),"Key"] <- input$keys
+                    current_keys(keymap)
+                    if(remap_idx()<6){
+                        remap_idx(remap_idx()+1)
+                    } else {
+                        remap(FALSE)
+                        remap_idx(1)
+                        updateCheckboxInput(inputId = "show_keys", value = FALSE)
+                    }
+                }
+            }
+        }
+    })
+    
+    observeEvent(input$endsession, {
+        session$sendCustomMessage(type = "closeWindow", message = "message")
+        output_vec <- feature_labels()$label
+        names(output_vec) <- feature_labels()$feature
+        stopApp(output_vec)
+    })
+    
+    # Remap things
+    output$keybindings <- renderUI({
+        if(input$show_keys){
+            tagList(
+                h4("Current keys are:"),
+                tableOutput("keymap"),
+                uiOutput("remapbutton")
+            )
+        }
+    })
+    
+    
+    current_keys <- reactiveVal(data.frame(
+        Action=c("Bad", "Good", "Revisit", "Ignore", "Undo once", "Return to R"),
+        Key=c("left", "right", "up", "down", "backspace", "esc")
+    ))
+    output$keymap <- renderTable(current_keys())
+    remap <- reactiveVal(FALSE)
+    remap_idx <- reactiveVal(1)
+    observeEvent(input$rekey, {
+        remap(TRUE)
+        current_keys(data.frame(
+            Key=c("", "", "", "", "", ""),
+            Action=c("Bad", "Good", "Revisit", "Ignore", "Undo once", "Return to R")
+        ))
+    })
+    output$remapbutton <- renderUI({
+        if(remap()){
+            NULL
+        } else {
+            actionButton("rekey", "Reassign?", width = "100%")
+        }
+    })
 }
 
-
-#' Label chromatographic features manually
+#' Label chromatographic features manually one at a time via interactive interface
 #'
-#' This function provides an interactive interface to a labeling function that
-#' plots one chromatographic feature at a time, showing the data from all the
-#' files in ms1_data within 1 minute of retention time and 10 ppm m/z space.
-#' The plot appears in a new window and is set up to detect key presses which
-#' have been bound to specific classifications. Currently, the left arrow key
-#' categorizes the feature as "Bad" while the right arrow key categorizes it
-#' as "Good". Up and down arrows can be bound to additional classifications if
-#' desired by editing the code, though a future update may provide more control.
-#' Classifications are returned as a character vector named with the feature
-#' IDs even if the full dataset is not classified. Exit the classifier with
-#' the Escape key.
+#' This function allows the user to view and label individual chromatographic
+#' features using the keyboard. Running labelFeatsManual launches a browser
+#' which shows a single feature extracted from multiple files. The feature can
+#' then be classified by pressing a key (defaults are left=bad, right=good) on 
+#' the keyboard which is recorded and a new feature is automatically shown.This 
+#' implementation relies on R's \pkg{shiny} package
+#' to provide interactive support in a browser environment and the
+#' \pkg{keys} package for key binding within a browser. Classified features are then
+#' returned as a simple R object for downstream use.
 #'
 #' @param peak_data Flat-form XC-MS data with columns for the bounding box of
 #' a chromatographic peak (mzmin, mzmax, rtmin, rtmax) as grouped by a feature
@@ -99,26 +177,14 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width = 10, rt_
 #' @param ms1_data Optional data.table object produced by RaMS containing MS1
 #' data with columns for filename, rt, mz, and int. If not provided, the files
 #' are detected from the filepath column in peak_data.
-#' @param existing_labels A character vector of equal length to the number of
-#' features in peak_data named with feature IDs. Can be used to provide a
-#' previously-existing partially-labeled dataset or double-check existing
-#' classifications.
-#' @param selection Either the string "Labeled" or "Unlabeled". If "Unlabeled",
-#' the classifier will target entries in the dataset that have not yet received
-#' a classification (i.e. those that have NA values in existing_labels). If
-#' "Labeled", the classifier will target (and overwrite) existing labels.
-#' Otherwise, the classifier will randomly target any feature whether previously
-#' classified or not.
-#' @param ppm_window_width The parts-per-million window of the extracted ion chromatogram
-#' @param rt_window_width The width of the retention time window for the extracted
-#' ion chromatogram, in minutes.
 #' @param verbosity Scalar value between zero and two determining how much
-#' diagnostic information is produced. Zero should return nothing, one should
-#' return text-based progress markers, and 2 will return diagnostic plots.
-#'
+#' diagnostic information is produced. 0 should return nothing while 1 will
+#' report diagnostic messages.
+#' 
 #' @return A character vector named with feature IDs containing the classifications
 #' of each peak that was viewed during the interactive phase. NA values indicate
 #' those features that were not classified.
+#' 
 #' @export
 #'
 #' @examples
@@ -144,80 +210,44 @@ labelSingleFeat <- function(feature_data_i, ms1_data, ppm_window_width = 10, rt_
 #' if (interactive()) {
 #'     manual_labels <- labelFeatsManual(peak_data)
 #' }
-labelFeatsManual <- function(peak_data, ms1_data = NULL, existing_labels = NULL,
-                             selection = "Unlabeled", verbosity = 1,
-                             ppm_window_width = 5, rt_window_width = 2) {
+labelFeatsManual <- function(peak_data, ms1_data = NULL, verbosity = 1) {
     feat_data <- peak_data %>%
         group_by(feature) %>%
         summarise(mzmed = median(mz), rtmed = median(rt))
-
-    if (is.null(existing_labels)) {
-        if (selection == "Labeled") {
-            message("No existing labels provided, defaulting to unlabeled")
-            selection <- "Unlabeled"
-        }
-    }
-
-    on.exit(return(feat_class_vec))
-    plot(1)
-
+    
     if (is.null(ms1_data)) {
         if (verbosity > 0) {
             message("Grabbing raw MS1 data")
         }
-        ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity = verbosity)$MS1
+        ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", 
+                               verbosity = verbosity)$MS1
+    }
+    
+    if (verbosity > 0) {
+        message("Launching Shiny app")
     }
 
-    feat_class_vec <- rep(NA, nrow(feat_data))
-    names(feat_class_vec) <- feat_data$feature
-
-    prev_feat_idx <- numeric()
-    backspace_triggered <- FALSE
-    while (TRUE) {
-        if (selection == "Unlabeled") {
-            feature_subset <- which(is.na(feat_class_vec))
-        } else if (selection == "Labeled") {
-            feature_subset <- which(!is.na(existing_labels))
-        } else {
-            feature_subset <- seq_along(feat_class_vec)
-        }
-        if (length(feature_subset) == 0) {
-            message("Nothing to label!")
-            break
-        }
-        if (backspace_triggered) {
-            chosen_feat_idx <- prev_feat_idx
-        } else {
-            chosen_feat_idx <- sample(feature_subset, 1)
-        }
-        if (interactive()) {
-            feat_label <- labelSingleFeat(feat_data[chosen_feat_idx, ], ms1_data,
-                ppm_window_width = ppm_window_width,
-                rt_window_width = rt_window_width
-            )
-            if (feat_label == "Quit") {
-                break
-            } else if (feat_label == "Backspace") {
-                backspace_triggered <- TRUE
-            } else if (feat_label == "Other") {
-                init_warn <- getOption("warn")
-                options(warn = 1)
-                warning("Unrecognized input, skipping")
-                options(warn = init_warn)
-                backspace_triggered <- FALSE
-            } else {
-                feat_class_vec[chosen_feat_idx] <- feat_label
-                prev_feat_idx <- chosen_feat_idx
-                backspace_triggered <- FALSE
-            }
-        } else {
-            warning("Not running in interactive mode, returning NA")
-            break
-        }
+    manualdef <- shinyApp(
+        ui = manualFeatUI,
+        server = function(input, output, session) {
+            manualFeatServer(input, output, session, feat_data, ms1_data)
+        },
+        options = c(launch.browser = TRUE)
+    )
+    if (interactive()) {
+        feat_class_vec <- runApp(manualdef)
+    } else {
+        warning("Not running in interactive mode, returning NA")
+        feat_class_vec <- rep(NA, length(feat_vec))
+        names(feat_class_vec) <- feat_vec
     }
+    
+    if (verbosity > 0) {
+        message("Returning classification data")
+        print(table(feat_class_vec))
+    }
+    return(feat_class_vec)
 }
-
-
 
 
 plotpeak <- function(feat_ids, interp_df) {
@@ -421,7 +451,8 @@ labelFeatsLasso <- function(peak_data, ms1_data = NULL, rt_window_width = 1,
         if (verbosity > 0) {
             message("Grabbing raw MS1 data")
         }
-        ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", verbosity = verbosity)$MS1
+        ms1_data <- grabMSdata(unique(peak_data$filepath), grab_what = "MS1", 
+                               verbosity = verbosity)$MS1
     }
 
     pickyPCAoutput <- pickyPCA(peak_data, ms1_data, rt_window_width, ppm_window_width)
