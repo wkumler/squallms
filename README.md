@@ -61,6 +61,8 @@ peak_data <- makeXcmsObjFlat(msnexp_filled)
 feat_metrics <- extractChromMetrics(peak_data, recalc_betas = TRUE, verbosity = 2, 
                                     ms1_data = msdata$MS1)
 class_labels <- labelFeatsLasso(peak_data, ms1_data=msdata$MS1, verbosity=1)
+# Alternatively, if manual labeling is desired:
+# class_labels <- labelFeatsManual(peak_data, ms1_data=msdata$MS1, verbosity=1)
 cleaned_xcms_obj <- updateXcmsObjFeats(msnexp_filled, feat_metrics, class_labels,
                                        likelihood_threshold=0.5, verbosity=2)
 ```
