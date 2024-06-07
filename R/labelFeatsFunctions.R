@@ -239,8 +239,8 @@ labelFeatsManual <- function(peak_data, ms1_data = NULL, verbosity = 1) {
     } else {
         warning("Not running in interactive mode, returning NA")
         feat_class_vec <- rep(NA, nrow(feat_data))
-        names(feat_class_vec) <- feat_class_vec
     }
+    names(feat_class_vec) <- feat_data$feature
     
     if (verbosity > 0) {
         message("Returning classification data")
