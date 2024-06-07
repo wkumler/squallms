@@ -55,6 +55,9 @@ logModelFeatProb <- function(feature_metrics, feature_labels,
         left_join(data.frame(feat_class = feature_labels) %>% rownames_to_column("feature"),
             by = "feature"
         )
+    if(all(is.na(model_df$feat_class))){
+        stop("All feature labels seem to be NA!")
+    }
     glmodel <- model_df %>%
         filter(!is.na(feat_class)) %>%
         mutate(feat_class = ifelse(feat_class == "Bad", 0, 1)) %>%
