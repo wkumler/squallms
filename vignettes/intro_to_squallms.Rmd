@@ -272,13 +272,7 @@ lasso_classes <- readRDS(system.file("extdata", "intro_lasso_labels.rds", packag
 table(lasso_classes, useNA = "ifany")
 ```
 
-If you're unsure how well the lasso performed, you can easily pass this vector back to the manual labeling tool with `selection = "Labeled"` to double-check on the agreement between the lasso and the manual methods.
-
-```{r manual_relabel_lasso, eval=FALSE}
-manual_classes <- labelFeatsManual(feat_peak_info, ms1_data = msdata$MS1, selection = "Labeled", existing_labels = lasso_classes)
-```
-
-This comparison between the lasso labels and the manual labels allows us to estimate the robustness of our labeling using typical metrics such as false positive/negative rates as well as accuracy and F1 scores, all provided concisely by the `caret` package.
+By comparing the lasso labels to the manual labels we can estimate the robustness of our labeling using typical metrics such as false positive/negative rates as well as accuracy and F1 scores, all provided concisely by the `caret` package.
 
 ```{r caret_confusion}
 suppressPackageStartupMessages(library(caret))
