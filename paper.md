@@ -14,7 +14,7 @@ authors:
       orcid: 0000-0003-1953-7329
       affiliation: 1
 affiliations:
-    - name: University of Washington School of Oceanography, Seattle, WA, USA
+    - name: University of Washington School of Oceanography, Seattle, WA 98195, USA
       index: 1
 date: '7 July 2024'
 bibliography: paper.bib
@@ -42,7 +42,7 @@ We then viewed the distribution of features in the first two principal component
 
 # Implementation as an interactive application in squallms
 
-While the demonstration above clearly separates high-quality features from low-quality features along the first principal component because quality is the largest source of variance in this data, this is not guaranteed to be the case. In datasets where inter-sample variability is high or many features have an increasing or decreasing baseline, the first principal component may become a combination quality and these other factors. This necessitated the development of an interactive method for the identification of the region where high-quality features predominate.
+While the demonstration above clearly separates high-quality features from low-quality features along the first principal component because quality is the largest source of variance in this data, this is not guaranteed to be the case. In datasets where inter-sample variability is high or many features have an increasing or decreasing baseline, the first principal component may become a combination of quality and these other factors. This necessitated the development of an interactive method for the identification of the region where high-quality features predominate.
 
 We developed the squallms R package to enable this kind of interactive feature selection and model construction. The package is designed to iterate through three distinct steps of feature quality annotation: metric extraction, interactive labeling, and model training plus application. 
 
@@ -66,7 +66,7 @@ The final step brings together the extracted quality metrics with the user's man
 
 # Acknowledgements
 
-This work was supported by the University of Washington eScience Institute through their Data Science Incubator program and Valentina Staneva in particular for suggesting the use of a PCA for estimating feature similarity. Funding was provided by the Simons Foundation (SCOPE Award ID 329108 to AEI, SF Award ID 385428 to AEI).
+This work was supported by the University of Washington eScience Institute through their Data Science Incubator program. We would like to thank Bryna Hazelton and Valentina Staneva in particular for thoughtful discussion on algorithm design and package development. Funding was provided by the Simons Foundation (SCOPE Award ID 329108 to AEI, SF Award ID 385428 to AEI).
 
 # References
 
