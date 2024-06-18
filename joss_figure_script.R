@@ -51,7 +51,9 @@ singlefeat_chrom_gp <- pcaoutput$interp_df %>%
                        values=c("#a41118", "#e0670b", "#f4bb23", "#028e34", "#0b505c", "#580770")) +
     labs(y="Intensity normalized\nto maximum", color="Filename") +
     theme_bw() +
-    theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+    theme(axis.text.x = element_blank(), axis.title.x = element_blank(),
+          legend.key.height = unit(0, "pt"))
+library(ggtext)
 singlefeat_heat_gp <- pcaoutput$interp_df %>%
     filter(feature=="FT137") %>%
     ggplot() +
@@ -61,7 +63,8 @@ singlefeat_heat_gp <- pcaoutput$interp_df %>%
     scale_y_discrete(expand = expansion()) +
     scale_fill_viridis_c(breaks=c(0, 0.5, 1), begin = 0, end = 0.75) +
     labs(x="Scaled retention time", y="Filename", fill="Intensity\nnormalized\nto maximum") +
-    theme_bw()
+    theme_bw() +
+    theme(axis.text.y = element_markdown(color = c("#a41118", "#e0670b", "#f4bb23", "#028e34", "#0b505c", "#580770"), face = "bold"))
 fig_1a <- plot_grid(singlefeat_chrom_gp, singlefeat_heat_gp, ncol = 1)
 
 
@@ -81,7 +84,7 @@ fig_1b <- pcaoutput$interp_df %>%
     ggplot() +
     geom_tile(aes(x = approx_rt, y = filename, fill = approx_int)) +
     facet_wrap(~feature, nrow = 4) +
-    scale_x_continuous(breaks = c(1, 25, 50), labels = c("0", "0.5", "1"), 
+    scale_x_continuous(breaks = c(1, 25, 50), labels = c("0", "0.5", "1"),
                        expand = expansion()) +
     scale_y_discrete(expand = expansion()) +
     scale_fill_viridis_c(breaks=c(0, 0.5, 1), begin = 0, end = 0.75) +
@@ -121,8 +124,8 @@ fig_1c <- pcaoutput$pcamat %>%
 
 
 
-fig_1 <- egg::ggarrange(singlefeat_chrom_gp, singlefeat_heat_gp, ncol = 1)
-ggsave("joss_fig1.png", plot = fig_1, device = "png", width = 6.5, height = 4,
+fig_1 <- egg::ggarrange(singlefeat_chrom_gp, singlefeat_heat_gp, ncol = 1, heights = c(0.45, 0.55))
+ggsave("joss_fig1.png", plot = fig_1, device = "png", width = 6.5, height = 3.5,
        units = "in", dpi = 300)
 fig_2 <- plot_grid(fig_1b, fig_1c, ncol = 1, rel_heights = c(0.4, 0.35))
 ggsave("joss_fig2.png", plot = fig_2, device = "png", width = 6.5, height = 4,
