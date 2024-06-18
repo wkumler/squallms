@@ -124,8 +124,8 @@ fig_1c <- pcaoutput$pcamat %>%
 fig_1 <- egg::ggarrange(singlefeat_chrom_gp, singlefeat_heat_gp, ncol = 1)
 ggsave("joss_fig1.png", plot = fig_1, device = "png", width = 6.5, height = 4,
        units = "in", dpi = 300)
-fig_2 <- plot_grid(fig_1b, fig_1c, ncol = 1, rel_heights = c(0.45, 0.35))
-ggsave("joss_fig2.png", plot = fig_2, device = "png", width = 6.5, height = 5,
+fig_2 <- plot_grid(fig_1b, fig_1c, ncol = 1, rel_heights = c(0.4, 0.35))
+ggsave("joss_fig2.png", plot = fig_2, device = "png", width = 6.5, height = 4,
        units = "in", dpi = 300)
 
 
