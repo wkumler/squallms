@@ -204,6 +204,11 @@ jobs:
           sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
+      - name: Debug S4 method conflict for scale
+        run: |
+          methods::showMethods("scale")
+        shell: Rscript {0}
+
       - name: Run CMD check
         env:
           _R_CHECK_CRAN_INCOMING_: false
