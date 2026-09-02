@@ -1,7 +1,7 @@
 Package: squallms
 Type: Package
 Title: Speedy quality assurance via lasso labeling for LC-MS data
-Version: 0.99.6
+Version: 0.99.7
 Authors@R: c(
   person(given = "William", family = "Kumler", email = "wkumler@uw.edu",
          role = c("aut", "cre", "cph"), comment=c(ORCID="0000-0002-5022-8009"))
@@ -20,6 +20,7 @@ RoxygenNote: 7.3.1
 biocViews: MassSpectrometry, Metabolomics, Proteomics, Lipidomics, ShinyApps,
   Classification, Clustering, FeatureExtraction, PrincipalComponent, Regression,
   Preprocessing, QualityControl, Visualization
+SystemRequirements: pandoc (>= 2.8)
 Depends:
     R (>= 3.5.0)
 Imports:
